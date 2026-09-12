@@ -119,6 +119,36 @@
             text-align: left;
             cursor: pointer;
         }
+
+        #eleveModal {
+            display: none;
+            margin-top: 16px;
+        }
+
+        #eleveSelect {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .eleve-preview {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .eleve-preview img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #cbd5e1;
+        }
     </style>
 </head>
 
@@ -132,17 +162,25 @@
             <input type="text" id="username" autocomplete="username">
         </div>
 
-        <div class="form-group">
+        <div class="form-group" id="passwordGroup">
             <label for="password">Mot de passe</label>
             <input type="password" id="password" autocomplete="current-password">
         </div>
 
         <button id="runBtn" class="main-btn">🖨️ Imprimer Devoirs À Venir</button>
+        <button id="reconnectBtn" class="main-btn" style="display: none; background-color: #64748b;">🔄 Se reconnecter</button>
 
         <div id="qcmModal">
             <p><strong>Vérification de sécurité :</strong></p>
             <p id="qcmQuestion"></p>
             <div id="qcmOptions"></div>
+        </div>
+
+        <div id="eleveModal">
+            <p><strong>Choisissez un élève :</strong></p>
+            <div class="eleve-preview" id="elevePreview"></div>
+            <select id="eleveSelect"></select>
+            <button id="eleveConfirmBtn" class="main-btn">Valider</button>
         </div>
 
         <div id="status"></div>
@@ -153,6 +191,8 @@
         const PROXY_BASE_URL = "https://ed-cors-proxy.herve-proeschel.workers.dev";
 
         let activeToken = '';
+        let isLoggedIn = false;
+        let selectedEleveId = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             const savedUser = localStorage.getItem('ed_user') || '';
@@ -384,11 +424,61 @@
             });
         }
 
-        function extractEleveId(data) {
-            if (!data || !data.accounts || data.accounts.length === 0) return null;
-            const eleve = data.accounts.find(a => a.typeCompte === 'E');
-            if (eleve) return eleve.id;
-            return data.accounts[0].id;
+        function getEleveAccounts(data) {
+            if (!data || !data.accounts) return [];
+            // Compte élève direct : isELE = true, l'id du compte est directement l'id élève
+            const directEleves = data.accounts.filter(a => a.isELE === true);
+            if (directEleves.length > 0) return directEleves;
+            // Compte parent : les élèves sont rattachés dans profile.eleves
+            const fromProfiles = data.accounts.flatMap(a => (a.profile && a.profile.eleves) || []);
+            if (fromProfiles.length > 0) return fromProfiles;
+            // Compte élève identifié par typeCompte
+            const eleves = data.accounts.filter(a => a.typeCompte === 'E');
+            return eleves.length > 0 ? eleves : data.accounts;
+        }
+
+        function getElevePhotoSrc(eleve) {
+            const photo = (eleve.profile && eleve.profile.photo) || eleve.photo || '';
+            if (!photo) return '';
+            if (photo.startsWith('//')) return `https:${photo}`;
+            if (photo.startsWith('http') || photo.startsWith('data:')) return photo;
+            return `data:image/jpeg;base64,${photo}`;
+        }
+
+        // Affiche toujours le sélecteur, même avec un seul élève, pour confirmation visuelle
+        function chooseEleve(data) {
+            const eleves = getEleveAccounts(data);
+            if (eleves.length === 0) return Promise.resolve(null);
+
+            return new Promise((resolve) => {
+                const modal = document.getElementById('eleveModal');
+                const select = document.getElementById('eleveSelect');
+                const preview = document.getElementById('elevePreview');
+                const confirmBtn = document.getElementById('eleveConfirmBtn');
+
+                select.innerHTML = '';
+                eleves.forEach(eleve => {
+                    const opt = document.createElement('option');
+                    opt.value = eleve.id;
+                    opt.innerText = `${eleve.prenom || ''} ${eleve.nom || ''}`.trim();
+                    select.appendChild(opt);
+                });
+
+                const updatePreview = () => {
+                    const eleve = eleves.find(e => String(e.id) === select.value);
+                    const photoSrc = eleve ? getElevePhotoSrc(eleve) : '';
+                    preview.innerHTML = photoSrc ? `<img src="${photoSrc}" alt="">` : '';
+                };
+
+                select.onchange = updatePreview;
+                updatePreview();
+                modal.style.display = 'block';
+
+                confirmBtn.onclick = () => {
+                    modal.style.display = 'none';
+                    resolve(select.value);
+                };
+            });
         }
 
         function renderAndPrint(daysData) {
@@ -458,7 +548,7 @@
             const password = document.getElementById('password').value;
             const btn = document.getElementById('runBtn');
 
-            if (!username || !password) {
+            if (!username || (!isLoggedIn && !password)) {
                 logStatus("Veuillez renseigner votre identifiant et mot de passe.", true);
                 return;
             }
@@ -467,14 +557,25 @@
             btn.disabled = true;
 
             try {
-                const accountData = await performLogin(username, password);
-                console.log(accountData);
-                const eleveId = extractEleveId(accountData);
+                let eleveId = selectedEleveId;
 
-                if (!eleveId) throw new Error("Profil élève introuvable sur ce compte.");
+                // Ré-utilise la session existante tant que le mot de passe n'a pas été redemandé
+                if (!isLoggedIn) {
+                    const accountData = await performLogin(username, password);
+                    console.log(accountData);
+                    logStatus("Sélection de l'élève...");
+                    eleveId = await chooseEleve(accountData);
+
+                    if (!eleveId) throw new Error("Profil élève introuvable sur ce compte.");
+
+                    isLoggedIn = true;
+                    selectedEleveId = eleveId;
+                    document.getElementById('passwordGroup').style.display = 'none';
+                    document.getElementById('reconnectBtn').style.display = 'block';
+                }
 
                 logStatus("Lecture du planning du cahier de texte...");
-                const listRes = await apiCall(`Eleves/${eleveId}/cahierdetexte.awp?verbe=get`);
+                const listRes = await apiCall(`v3/Eleves/${eleveId}/cahierdetexte.awp?verbe=get`);
 
                 if (listRes.code !== 200 || !listRes.data) {
                     throw new Error(listRes.message || "Erreur lors de la lecture du cahier de texte.");
@@ -507,6 +608,20 @@
                 logStatus("Erreur : " + err.message, true);
                 btn.disabled = false;
             }
+        });
+
+        document.getElementById('reconnectBtn').addEventListener('click', () => {
+            isLoggedIn = false;
+            activeToken = '';
+            savedGtk = '';
+            rawCookies = '';
+            selectedEleveId = null;
+
+            document.getElementById('password').value = '';
+            document.getElementById('passwordGroup').style.display = 'block';
+            document.getElementById('reconnectBtn').style.display = 'none';
+            document.getElementById('password').focus();
+            logStatus("Veuillez ressaisir votre mot de passe pour vous reconnecter.");
         });
     </script>
 </body>
