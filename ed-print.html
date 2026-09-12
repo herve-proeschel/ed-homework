@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cahier de Texte - Devoirs à Venir</title>
+    <style>
+        :root {
+            --primary: #0b4e84;
+            --primary-hover: #083b64;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --border: #cbd5e1;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: #1e293b;
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 1.35rem;
+            margin-top: 0;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        button.main-btn {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button.main-btn:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .status-info {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .status-error {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        /* QCM Modal si 2FA */
+        #qcmModal {
+            display: none;
+            background: #fff;
+            border: 2px solid var(--primary);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .qcm-option {
+            width: 100%;
+            padding: 10px;
+            margin: 6px 0;
+            background: #f1f5f9;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            text-align: left;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Cahier de Texte</h1>
+
+        <div class="form-group">
+            <label for="username">Identifiant ÉcoleDirecte</label>
+            <input type="text" id="username" autocomplete="username">
+        </div>
+
+        <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <input type="password" id="password" autocomplete="current-password">
+        </div>
+
+        <button id="runBtn" class="main-btn">🖨️ Imprimer Devoirs À Venir</button>
+
+        <div id="qcmModal">
+            <p><strong>Vérification de sécurité :</strong></p>
+            <p id="qcmQuestion"></p>
+            <div id="qcmOptions"></div>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+
+        const PROXY_BASE_URL = "https://ed-cors-proxy.herve-proeschel.workers.dev";
+
+        let activeToken = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('ed_user') || '';
+            if (savedUser) document.getElementById('username').value = savedUser;
+        });
+
+        function logStatus(msg, isError = false) {
+            const status = document.getElementById('status');
+            status.style.display = 'block';
+            status.className = isError ? 'status-error' : 'status-info';
+            status.innerText = msg;
+        }
+
+        function decodeBase64Utf8(str) {
+            if (!str) return '';
+            try {
+                const binary = atob(str);
+                const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+                return new TextDecoder('utf-8').decode(bytes);
+            } catch (e) {
+                try { return atob(str); } catch (err) { return str; }
+            }
+        }
+
+        function formatDateFrench(dateStr) {
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            const d = new Date(parts[0], parts[1] - 1, parts[2]);
+            return d.toLocaleDateString('fr-FR', {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+            });
+        }
+
+        let savedGtkHeader = '';
+
+        let cookieJar = {};
+
+        function updateCookiesFromHeader(headerValue) {
+            if (!headerValue) return;
+            headerValue.split(';').forEach(cookieStr => {
+                const parts = cookieStr.trim().split('=');
+                if (parts.length >= 2) {
+                    cookieJar[parts[0].trim()] = parts.slice(1).join('=').trim();
+                }
+            });
+        }
+
+        function getCookieHeader() {
+            return Object.entries(cookieJar)
+                .map(([k, v]) => `${k}=${v}`)
+                .join('; ');
+        }
+
+        // response.json() ne peut être lu qu'une fois et échoue si le flux est vide/incomplet
+        async function parseJsonResponse(response) {
+            const text = await response.text();
+            if (!text) return null;
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('Réponse non-JSON reçue :', text);
+                return null;
+            }
+        }
+
+        // On récupère ou initialise le tableau fa mémorisé
+        let savedFa = JSON.parse(localStorage.getItem('ed_fa') || 'null');
+
+        const ED_VERSION = "4.101.4";
+        let savedGtk = "";
+        let rawCookies = "";
+
+        async function apiCall(endpoint, method = 'POST', payload = {}, withToken = true) {
+            // Évite le double slash (//v3)
+            const cleanEndpoint = endpoint.replace(/^\/+/, '');
+            // Ajoute systématiquement la version ÉcoleDirecte si absente
+            const separator = cleanEndpoint.includes('?') ? '&' : '?';
+            const endpointWithVersion = cleanEndpoint.includes('v=') ? cleanEndpoint : `${cleanEndpoint}${separator}v=${ED_VERSION}`;
+            const url = `${PROXY_BASE_URL}/${endpointWithVersion}`;
+
+            const headers = {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json, text/plain, */*'
+            };
+
+            if (withToken && activeToken) {
+                headers['X-Token'] = activeToken;
+            }
+
+            if (savedGtk) {
+                headers['x-gtk'] = savedGtk;
+            }
+
+            if (rawCookies) {
+                headers['x-cookies'] = rawCookies;
+            }
+
+            const bodyParam = new URLSearchParams();
+            bodyParam.append('data', JSON.stringify(payload));
+
+            const response = await fetch(url, {
+                method: method,
+                headers: headers,
+                body: method === 'POST' ? bodyParam.toString() : undefined
+            });
+
+            const refreshedToken = response.headers.get('x-token') || response.headers.get('X-Token');
+            if (refreshedToken) {
+                activeToken = refreshedToken;
+            }
+
+            const newCookies = response.headers.get('x-all-cookies');
+            if (newCookies) {
+                rawCookies = newCookies;
+                // Extrait la valeur GTK si présente dans les cookies
+                const gtkMatch = newCookies.match(/GTK=([^;]+)/);
+                if (gtkMatch && gtkMatch[1]) {
+                    savedGtk = gtkMatch[1];
+                }
+            }
+
+            const jsonResponse = await parseJsonResponse(response);
+            console.log(jsonResponse);
+            return jsonResponse || {};
+        }
+
+        async function performLogin(username, password) {
+            logStatus("Initialisation session (GTK)...");
+
+            // 1. Initialisation GTK avec la bonne version 4.101.4
+            const gtkUrl = `${PROXY_BASE_URL}/v3/login.awp?gtk=1&v=${ED_VERSION}`;
+            const gtkRes = await fetch(gtkUrl, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json, text/plain, */*' }
+            });
+
+            const returnedCookies = gtkRes.headers.get('x-all-cookies') || '';
+            if (returnedCookies) {
+                rawCookies = returnedCookies;
+                const match = returnedCookies.match(/GTK=([^;]+)/);
+                if (match && match[1]) {
+                    savedGtk = match[1];
+                }
+            }
+
+            // Récupération de la réponse JSON GTK (certaines versions renvoient le token/gtk en JSON)
+            const gtkJson = await parseJsonResponse(gtkRes);
+            if (gtkJson && gtkJson.data && gtkJson.data.token) {
+                savedGtk = gtkJson.data.token;
+            }
+
+            logStatus("Authentification...");
+
+            // 2. Requête Login avec version 4.101.4 et payload exacte
+            const loginPayload = {
+                identifiant: username.trim(),
+                motdepasse: password,
+                isReLogin: false,
+                uuid: "",
+                fa: savedFa || []
+            };
+
+            const res = await apiCall(`v3/login.awp`, 'POST', loginPayload, false);
+
+            if (res.code === 250) {
+                return await handleQCM(res.token);
+            }
+
+            if (res.code !== 200 || !res.token) {
+                throw new Error(res.message || "Identifiant ou mot de passe invalide.");
+            }
+
+            activeToken = res.token;
+            console.log(res);
+
+            return res.data;
+        }
+
+        async function handleQCM(tempToken) {
+            activeToken = tempToken;
+            logStatus("Question de sécurité (2FA requise)...");
+            const qcmRes = await apiCall('connexion/doubleauth.awp?verbe=get', 'POST', {});
+
+            if (qcmRes.code !== 200 || !qcmRes.data) {
+                throw new Error("Impossible de charger la question de sécurité.");
+            }
+
+            const question = decodeBase64Utf8(qcmRes.data.question);
+            const propositions = qcmRes.data.propositions || [];
+
+            return new Promise((resolve, reject) => {
+                document.getElementById('qcmModal').style.display = 'block';
+                document.getElementById('qcmQuestion').innerText = question;
+                const optContainer = document.getElementById('qcmOptions');
+                optContainer.innerHTML = '';
+
+                propositions.forEach(prop => {
+                    const btn = document.createElement('button');
+                    btn.className = 'qcm-option';
+                    btn.innerText = decodeBase64Utf8(prop);
+                    btn.onclick = async () => {
+                        try {
+                            optContainer.innerHTML = 'Validation...';
+                            const answerRes = await apiCall('connexion/doubleauth.awp?verbe=post', 'POST', { choix: prop });
+                            document.getElementById('qcmModal').style.display = 'none';
+
+                            // Sauvegarde du cn/cv renvoyé par l'API
+                            if (answerRes.data && answerRes.data.cn && answerRes.data.cv) {
+                                savedFa = [answerRes.data];
+                                localStorage.setItem('ed_fa', JSON.stringify(savedFa));
+                            }
+
+                            const finalLogin = await apiCall('v3/login.awp', 'POST', {
+                                identifiant: document.getElementById('username').value.trim(),
+                                motdepasse: document.getElementById('password').value,
+                                isReLogin: false,
+                                uuid: "",
+                                fa: savedFa
+                            }, false);
+
+                            activeToken = finalLogin.token;
+                            resolve(finalLogin.data);
+                        } catch (err) {
+                            reject(err);
+                        }
+                    };
+                    optContainer.appendChild(btn);
+                });
+            });
+        }
+
+        function extractEleveId(data) {
+            if (!data || !data.accounts || data.accounts.length === 0) return null;
+            const eleve = data.accounts.find(a => a.typeCompte === 'E');
+            if (eleve) return eleve.id;
+            return data.accounts[0].id;
+        }
+
+        function renderAndPrint(daysData) {
+            let contentHtml = '';
+
+            daysData.forEach(day => {
+                contentHtml += `
+                <div class="day-container">
+                    <h2 class="day-title">${formatDateFrench(day.date).toUpperCase()}</h2>
+            `;
+
+                let hwCount = 0;
+                (day.matieres || []).forEach(m => {
+                    const aFaire = m.aFaire;
+                    if (!aFaire && (!m.contenuDeSeance || !m.contenuDeSeance.contenu)) return;
+
+                    hwCount++;
+                    const detailsHtml = decodeBase64Utf8(aFaire ? aFaire.contenu : '');
+                    const dateDonne = aFaire && aFaire.donneLe ? `(Donné le ${formatDateFrench(aFaire.donneLe)})` : '';
+                    const isEval = aFaire && aFaire.interrogation ? '<span class="badge-eval">Contrôle</span>' : '';
+
+                    contentHtml += `
+                    <div class="subject-box">
+                        <div class="subject-header">
+                            <span class="subject-title">${m.matiere || 'Matière'}</span>
+                            <span class="subject-meta">${dateDonne} ${isEval}</span>
+                        </div>
+                        <div class="subject-content">${detailsHtml || '<em>Sans consigne écrite</em>'}</div>
+                    </div>
+                `;
+                });
+
+                if (hwCount === 0) {
+                    contentHtml += `<p style="font-style: italic; color: #666;">Aucun travail spécifique pour ce jour.</p>`;
+                }
+
+                contentHtml += `</div>`;
+            });
+
+            // Sur mobile, remplacer directement le contenu de la page évite le blocage des pop-ups
+            document.body.innerHTML = `
+            <style>
+                body { font-family: Arial, sans-serif; color: #222; margin: 16px; line-height: 1.4; background: #fff; }
+                .day-container { margin-bottom: 24px; }
+                .day-title { font-size: 1.15rem; background-color: #0b4e84; color: white; padding: 6px 12px; border-radius: 4px; margin-bottom: 10px; }
+                .subject-box { border: 1px solid #ccc; border-left: 5px solid #0b4e84; margin-bottom: 8px; padding: 8px 12px; }
+                .subject-header { display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #eee; padding-bottom: 4px; }
+                .subject-title { font-weight: bold; color: #0b4e84; }
+                .subject-meta { font-size: 0.85rem; color: #555; }
+                .badge-eval { background: #dc3545; color: white; padding: 2px 5px; border-radius: 3px; font-weight: bold; font-size: 0.75rem; margin-left: 6px; }
+                .subject-content { font-size: 0.95rem; }
+                @media print {
+                    .day-title { background-color: #eee !important; color: #000 !important; border: 1px solid #aaa; }
+                }
+            </style>
+            <h1 style="text-align: center;">Devoirs à venir</h1>
+            ${contentHtml}
+        `;
+
+            setTimeout(() => {
+                window.print();
+            }, 300);
+        }
+
+        document.getElementById('runBtn').addEventListener('click', async () => {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('runBtn');
+
+            if (!username || !password) {
+                logStatus("Veuillez renseigner votre identifiant et mot de passe.", true);
+                return;
+            }
+
+            localStorage.setItem('ed_user', username);
+            btn.disabled = true;
+
+            try {
+                const accountData = await performLogin(username, password);
+                console.log(accountData);
+                const eleveId = extractEleveId(accountData);
+
+                if (!eleveId) throw new Error("Profil élève introuvable sur ce compte.");
+
+                logStatus("Lecture du planning du cahier de texte...");
+                const listRes = await apiCall(`Eleves/${eleveId}/cahierdetexte.awp?verbe=get`);
+
+                if (listRes.code !== 200 || !listRes.data) {
+                    throw new Error(listRes.message || "Erreur lors de la lecture du cahier de texte.");
+                }
+
+                const todayStr = new Date().toISOString().split('T')[0];
+                const futureDates = Object.keys(listRes.data).filter(d => d > todayStr).sort();
+
+                if (futureDates.length === 0) {
+                    logStatus("Aucun devoir programmé pour les jours suivants.");
+                    btn.disabled = false;
+                    return;
+                }
+
+                const detailedDays = [];
+                for (let i = 0; i < futureDates.length; i++) {
+                    const date = futureDates[i];
+                    logStatus(`Collecte (${i + 1}/${futureDates.length}) : ${date}...`);
+                    const detail = await apiCall(`Eleves/${eleveId}/cahierdetexte/${date}.awp?verbe=get`);
+                    if (detail && detail.code === 200 && detail.data) {
+                        detailedDays.push(detail.data);
+                    }
+                }
+
+                logStatus("Génération de la vue d'impression...");
+                renderAndPrint(detailedDays);
+
+            } catch (err) {
+                console.error(err);
+                logStatus("Erreur : " + err.message, true);
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>
