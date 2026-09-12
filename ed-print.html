@@ -149,12 +149,26 @@
             object-fit: cover;
             background: #cbd5e1;
         }
+
+        #printView {
+            display: none;
+        }
+
+        @media print {
+            #appContainer {
+                display: none !important;
+            }
+
+            #printView {
+                display: block !important;
+            }
+        }
     </style>
 </head>
 
 <body>
 
-    <div class="container">
+    <div class="container" id="appContainer">
         <h1>Cahier de Texte</h1>
 
         <div class="form-group">
@@ -186,6 +200,8 @@
         <div id="status"></div>
     </div>
 
+    <div id="printView"></div>
+
     <script>
 
         const PROXY_BASE_URL = "https://ed-cors-proxy.herve-proeschel.workers.dev";
@@ -193,10 +209,43 @@
         let activeToken = '';
         let isLoggedIn = false;
         let selectedEleveId = null;
+        let eleveList = [];
+
+        const SESSION_KEY = 'ed_session';
+
+        function saveSession() {
+            if (!isLoggedIn) return;
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+                activeToken, savedGtk, rawCookies, selectedEleveId, eleveList
+            }));
+        }
+
+        function clearSession() {
+            sessionStorage.removeItem(SESSION_KEY);
+        }
+
+        function restoreSession() {
+            const raw = sessionStorage.getItem(SESSION_KEY);
+            if (!raw) return;
+            try {
+                const saved = JSON.parse(raw);
+                if (!saved.activeToken || !saved.selectedEleveId) return;
+                activeToken = saved.activeToken;
+                savedGtk = saved.savedGtk || '';
+                rawCookies = saved.rawCookies || '';
+                selectedEleveId = saved.selectedEleveId;
+                eleveList = saved.eleveList || [];
+                isLoggedIn = true;
+                document.getElementById('passwordGroup').style.display = 'none';
+                document.getElementById('reconnectBtn').style.display = 'block';
+                logStatus("Session restaurée, prêt à imprimer.");
+            } catch (e) { }
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             const savedUser = localStorage.getItem('ed_user') || '';
             if (savedUser) document.getElementById('username').value = savedUser;
+            restoreSession();
         });
 
         function logStatus(msg, isError = false) {
@@ -314,10 +363,13 @@
                 }
             }
 
+            if (refreshedToken || newCookies) saveSession();
+
             const jsonResponse = await parseJsonResponse(response);
             console.log(jsonResponse);
             return jsonResponse || {};
         }
+
 
         async function performLogin(username, password) {
             logStatus("Initialisation session (GTK)...");
@@ -447,8 +499,12 @@
 
         // Affiche toujours le sélecteur, même avec un seul élève, pour confirmation visuelle
         function chooseEleve(data) {
-            const eleves = getEleveAccounts(data);
-            if (eleves.length === 0) return Promise.resolve(null);
+            eleveList = getEleveAccounts(data);
+            return chooseEleveFromList(eleveList);
+        }
+
+        function chooseEleveFromList(eleves) {
+            if (!eleves || eleves.length === 0) return Promise.resolve(null);
 
             return new Promise((resolve) => {
                 const modal = document.getElementById('eleveModal');
@@ -480,6 +536,7 @@
                 };
             });
         }
+
 
         function renderAndPrint(daysData) {
             let contentHtml = '';
@@ -518,10 +575,10 @@
                 contentHtml += `</div>`;
             });
 
-            // Sur mobile, remplacer directement le contenu de la page évite le blocage des pop-ups
-            document.body.innerHTML = `
+            // Vue dédiée à l'impression : le reste de l'app reste intact et réutilisable après impression
+            document.getElementById('printView').innerHTML = `
             <style>
-                body { font-family: Arial, sans-serif; color: #222; margin: 16px; line-height: 1.4; background: #fff; }
+                #printView { font-family: Arial, sans-serif; color: #222; margin: 16px; line-height: 1.4; background: #fff; }
                 .day-container { margin-bottom: 24px; }
                 .day-title { font-size: 1.15rem; background-color: #0b4e84; color: white; padding: 6px 12px; border-radius: 4px; margin-bottom: 10px; }
                 .subject-box { border: 1px solid #ccc; border-left: 5px solid #0b4e84; margin-bottom: 8px; padding: 8px 12px; }
@@ -542,6 +599,24 @@
                 window.print();
             }, 300);
         }
+
+        // Une fois l'impression terminée (ou annulée), on revient à la sélection de l'élève
+        window.addEventListener('afterprint', () => {
+            document.getElementById('printView').innerHTML = '';
+            const btn = document.getElementById('runBtn');
+            btn.disabled = false;
+            if (isLoggedIn && eleveList.length > 0) {
+                logStatus("Choisissez un autre élève ou relancez l'impression.");
+                chooseEleveFromList(eleveList).then(eleveId => {
+                    if (eleveId) {
+                        selectedEleveId = eleveId;
+                        saveSession();
+                        btn.click();
+                    }
+                });
+            }
+        });
+
 
         document.getElementById('runBtn').addEventListener('click', async () => {
             const username = document.getElementById('username').value.trim();
@@ -572,6 +647,7 @@
                     selectedEleveId = eleveId;
                     document.getElementById('passwordGroup').style.display = 'none';
                     document.getElementById('reconnectBtn').style.display = 'block';
+                    saveSession();
                 }
 
                 logStatus("Lecture du planning du cahier de texte...");
@@ -616,6 +692,8 @@
             savedGtk = '';
             rawCookies = '';
             selectedEleveId = null;
+            eleveList = [];
+            clearSession();
 
             document.getElementById('password').value = '';
             document.getElementById('passwordGroup').style.display = 'block';
