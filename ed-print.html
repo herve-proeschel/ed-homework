@@ -594,7 +594,7 @@
                 for (let i = 0; i < futureDates.length; i++) {
                     const date = futureDates[i];
                     logStatus(`Collecte (${i + 1}/${futureDates.length}) : ${date}...`);
-                    const detail = await apiCall(`Eleves/${eleveId}/cahierdetexte/${date}.awp?verbe=get`);
+                    const detail = await apiCall(`v3/Eleves/${eleveId}/cahierdetexte/${date}.awp?verbe=get`);
                     if (detail && detail.code === 200 && detail.data) {
                         detailedDays.push(detail.data);
                     }
