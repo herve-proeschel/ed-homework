@@ -24,6 +24,7 @@ function App() {
     printDays,
     buildPrintHtml,
     run,
+    printHomework,
     afterPrint,
     disconnect,
     restoreFromStorage,
@@ -86,7 +87,13 @@ function App() {
         )}
 
         <QcmModal qcm={qcm} onAnswer={answerQcm} />
-        <EleveModal eleveModal={eleveModal} onSelect={selectEleveOption} onConfirm={confirmEleve} />
+        <EleveModal
+          eleveModal={eleveModal}
+          onSelect={selectEleveOption}
+          onConfirm={confirmEleve}
+          onPrint={printHomework}
+          canPrint={!!printDays}
+        />
 
         <StatusMessage message={status} isError={statusIsError} />
       </div>

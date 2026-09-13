@@ -1,6 +1,6 @@
 import { getElevePhotoSrc } from '../services/edClient';
 
-export default function EleveModal({ eleveModal, onSelect, onConfirm }) {
+export default function EleveModal({ eleveModal, onSelect, onConfirm, onPrint, canPrint }) {
   if (!eleveModal) return null;
   const { eleves, selectedId } = eleveModal;
   const selectedEleve = eleves.find((e) => String(e.id) === selectedId);
@@ -18,9 +18,22 @@ export default function EleveModal({ eleveModal, onSelect, onConfirm }) {
           </option>
         ))}
       </select>
-      <button type="button" className="main-btn" onClick={onConfirm}>
-        Valider
-      </button>
+      <div className="action-row">
+        <button type="button" className="main-btn" onClick={onConfirm}>
+          Récupérer les devoirs
+        </button>
+        {canPrint && (
+          <button
+            type="button"
+            className="print-btn"
+            onClick={onPrint}
+            title="Imprimer"
+            aria-label="Imprimer"
+          >
+            🖨️
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -204,6 +204,7 @@ export function useHomeworkPrinter() {
 
     saveUsername(username);
     setBusy(true);
+    setPrintDays(null);
 
     try {
       let eleveId = selectedEleveIdRef.current;
@@ -246,9 +247,9 @@ export function useHomeworkPrinter() {
         }
       }
 
-      logStatus("Génération de la vue d'impression...");
+      logStatus('Devoirs récupérés, prêts à imprimer.');
       setPrintDays(detailedDays);
-      setTimeout(() => window.print(), 300);
+      setBusy(false);
     } catch (err) {
       console.error(err);
       logStatus('Erreur : ' + err.message, true);
@@ -260,19 +261,13 @@ export function useHomeworkPrinter() {
     runRef.current = run;
   }, [run]);
 
-  const afterPrint = useCallback(async () => {
-    setPrintDays(null);
-    setBusy(false);
-    if (isLoggedIn && eleveListRef.current.length > 0) {
-      logStatus('Choisissez un autre élève ou relancez l\'impression.');
-      const eleveId = await askEleve(eleveListRef.current);
-      if (eleveId) {
-        selectedEleveIdRef.current = eleveId;
-        persistSession();
-        run();
-      }
-    }
-  }, [isLoggedIn, logStatus, askEleve, persistSession, run]);
+  const printHomework = useCallback(() => {
+    window.print();
+  }, []);
+
+  const afterPrint = useCallback(() => {
+    logStatus('Impression terminée.');
+  }, [logStatus]);
 
   const disconnect = useCallback(() => {
     clientRef.current = new EdClient();
@@ -280,6 +275,7 @@ export function useHomeworkPrinter() {
     selectedEleveIdRef.current = null;
     eleveListRef.current = [];
     setEleveModal(null);
+    setPrintDays(null);
     clearSession();
     setPassword('');
     logStatus('Vous êtes déconnecté.');
@@ -302,6 +298,7 @@ export function useHomeworkPrinter() {
     printDays,
     buildPrintHtml,
     run,
+    printHomework,
     afterPrint,
     disconnect,
     restoreFromStorage,
