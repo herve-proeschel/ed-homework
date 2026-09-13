@@ -13,7 +13,7 @@ export function restoreSession() {
     const saved = JSON.parse(raw);
     if (!saved.activeToken || !saved.selectedEleveId) return null;
     return saved;
-  } catch (e) {
+  } catch {
     return null;
   }
 }

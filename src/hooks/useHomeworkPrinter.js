@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { EdClient, decodeBase64Utf8, getEleveAccounts, getAccountFullName } from '../services/edClient';
+import {
+  EdClient,
+  decodeBase64Utf8,
+  getEleveAccounts,
+  getAccountFullName,
+  isSessionExpiredError,
+} from '../services/edClient';
 import {
   saveSession,
   restoreSession,
@@ -190,14 +196,28 @@ export function useHomeworkPrinter() {
     return contentHtml;
   }
 
-  function formatDay(dateStr) {
+  const formatDay = (dateStr) => {
     const parts = dateStr.split('-');
     if (parts.length !== 3) return dateStr;
     const d = new Date(parts[0], parts[1] - 1, parts[2]);
     return d
       .toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
       .toUpperCase();
-  }
+  };
+
+  const handleSessionExpired = useCallback(
+    (msg = 'Votre session a expiré après une période d’inactivité. Veuillez saisir votre mot de passe pour vous reconnecter.') => {
+      clientRef.current = new EdClient();
+      setIsLoggedIn(false);
+      selectedEleveIdRef.current = null;
+      eleveListRef.current = [];
+      setEleveModal(null);
+      setPrintDays(null);
+      clearSession();
+      logStatus(msg, true);
+    },
+    [logStatus],
+  );
 
   const run = useCallback(async () => {
     if (!username || (!isLoggedIn && !password)) {
@@ -226,9 +246,30 @@ export function useHomeworkPrinter() {
       }
 
       logStatus('Lecture du planning du cahier de texte...');
-      const listRes = await clientRef.current.getCahierDeTexte(eleveId);
+      let listRes = await clientRef.current.getCahierDeTexte(eleveId);
+
+      // Si la session/token a expiré
+      if (isSessionExpiredError(listRes)) {
+        if (password) {
+          logStatus('Session expirée, ré-authentification en cours...');
+          const accountData = await performLogin();
+          setDisplayName(getAccountFullName(accountData));
+          setIsLoggedIn(true);
+          persistSession();
+          listRes = await clientRef.current.getCahierDeTexte(eleveId);
+        } else {
+          handleSessionExpired();
+          setBusy(false);
+          return;
+        }
+      }
 
       if (listRes.code !== 200 || !listRes.data) {
+        if (isSessionExpiredError(listRes)) {
+          handleSessionExpired();
+          setBusy(false);
+          return;
+        }
         throw new Error(listRes.message || 'Erreur lors de la lecture du cahier de texte.');
       }
 
@@ -237,6 +278,7 @@ export function useHomeworkPrinter() {
 
       if (futureDates.length === 0) {
         logStatus('Aucun devoir programmé pour les jours suivants.');
+        persistSession();
         setBusy(false);
         return;
       }
@@ -245,21 +287,51 @@ export function useHomeworkPrinter() {
       for (let i = 0; i < futureDates.length; i++) {
         const date = futureDates[i];
         logStatus(`Collecte (${i + 1}/${futureDates.length}) : ${date}...`);
-        const detail = await clientRef.current.getCahierDeTexteDetail(eleveId, date);
+        let detail = await clientRef.current.getCahierDeTexteDetail(eleveId, date);
+
+        if (isSessionExpiredError(detail)) {
+          if (password) {
+            logStatus('Renouvellement de la session...');
+            const accountData = await performLogin();
+            setDisplayName(getAccountFullName(accountData));
+            setIsLoggedIn(true);
+            persistSession();
+            detail = await clientRef.current.getCahierDeTexteDetail(eleveId, date);
+          } else {
+            handleSessionExpired('Votre session a expiré pendant la récupération. Veuillez vous reconnecter.');
+            setBusy(false);
+            return;
+          }
+        }
+
         if (detail && detail.code === 200 && detail.data) {
           detailedDays.push(detail.data);
         }
       }
 
+      persistSession();
       logStatus('Devoirs récupérés, prêts à imprimer.');
       setPrintDays(detailedDays);
       setBusy(false);
     } catch (err) {
       console.error(err);
-      logStatus('Erreur : ' + err.message, true);
+      if (isSessionExpiredError({ message: err.message })) {
+        handleSessionExpired();
+      } else {
+        logStatus('Erreur : ' + err.message, true);
+      }
       setBusy(false);
     }
-  }, [username, password, isLoggedIn, performLogin, chooseEleve, persistSession, logStatus]);
+  }, [
+    username,
+    password,
+    isLoggedIn,
+    performLogin,
+    chooseEleve,
+    persistSession,
+    logStatus,
+    handleSessionExpired,
+  ]);
 
   useEffect(() => {
     runRef.current = run;

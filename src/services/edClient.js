@@ -7,10 +7,10 @@ export function decodeBase64Utf8(str) {
     const binary = atob(str);
     const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
     return new TextDecoder('utf-8').decode(bytes);
-  } catch (e) {
+  } catch {
     try {
       return atob(str);
-    } catch (err) {
+    } catch {
       return str;
     }
   }
@@ -34,10 +34,33 @@ async function parseJsonResponse(response) {
   if (!text) return null;
   try {
     return JSON.parse(text);
-  } catch (e) {
+  } catch {
     console.error('Réponse non-JSON reçue :', text);
     return null;
   }
+}
+
+export function isSessionExpiredError(res) {
+  if (!res) return false;
+  const code = Number(res.code);
+  if ([401, 403, 505, 520, 525].includes(code)) {
+    return true;
+  }
+  if (typeof res.message === 'string') {
+    const msg = res.message.toLowerCase();
+    if (
+      msg.includes('session expir') ||
+      msg.includes('token invalide') ||
+      msg.includes('token expiré') ||
+      msg.includes('non authentifié') ||
+      msg.includes('veuillez vous reconnecter') ||
+      msg.includes('session fermée') ||
+      msg.includes('inactivité')
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Encapsule l'état de session ÉcoleDirecte (token/GTK/cookies) hors de React
@@ -120,7 +143,10 @@ export class EdClient {
     }
 
     const jsonResponse = await parseJsonResponse(response);
-    return jsonResponse || {};
+    if (!jsonResponse) {
+      return { code: response.status, message: response.statusText || 'Erreur réseau/serveur' };
+    }
+    return jsonResponse;
   }
 
   async initGtk() {
