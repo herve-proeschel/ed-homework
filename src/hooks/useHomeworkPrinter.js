@@ -52,7 +52,8 @@ export function useHomeworkPrinter() {
 
       if (!isLoggedIn) {
         const accountData = await performLogin();
-        setDisplayName(getAccountFullName(accountData));
+        const accountDisplayName = getAccountFullName(accountData);
+        setDisplayName(accountDisplayName);
         setIsLoggedIn(true);
         logStatus("Sélection de l'élève...");
         eleveId = await chooseEleve(accountData);
@@ -60,7 +61,7 @@ export function useHomeworkPrinter() {
         if (!eleveId) throw new Error('Profil élève introuvable sur ce compte.');
 
         selectedEleveIdRef.current = eleveId;
-        persistSession();
+        persistSession(accountDisplayName);
       }
 
       logStatus('Lecture du planning du cahier de texte...');
@@ -71,9 +72,10 @@ export function useHomeworkPrinter() {
         if (password) {
           logStatus('Session expirée, ré-authentification en cours...');
           const accountData = await performLogin();
-          setDisplayName(getAccountFullName(accountData));
+          const accountDisplayName = getAccountFullName(accountData);
+          setDisplayName(accountDisplayName);
           setIsLoggedIn(true);
-          persistSession();
+          persistSession(accountDisplayName);
           listRes = await clientRef.current.getCahierDeTexte(eleveId);
         } else {
           handleSessionExpired();
@@ -111,9 +113,10 @@ export function useHomeworkPrinter() {
           if (password) {
             logStatus('Renouvellement de la session...');
             const accountData = await performLogin();
-            setDisplayName(getAccountFullName(accountData));
+            const accountDisplayName = getAccountFullName(accountData);
+            setDisplayName(accountDisplayName);
             setIsLoggedIn(true);
-            persistSession();
+            persistSession(accountDisplayName);
             detail = await clientRef.current.getCahierDeTexteDetail(eleveId, date);
           } else {
             handleSessionExpired('Votre session a expiré pendant la récupération. Veuillez vous reconnecter.');
