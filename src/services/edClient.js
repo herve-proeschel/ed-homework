@@ -189,6 +189,12 @@ export class EdClient {
   }
 }
 
+export function getAccountFullName(data) {
+  const account = data && data.accounts && data.accounts[0];
+  if (!account) return '';
+  return `${account.prenom || ''} ${account.nom || ''}`.trim();
+}
+
 export function getEleveAccounts(data) {
   if (!data || !data.accounts) return [];
   const directEleves = data.accounts.filter((a) => a.isELE === true);

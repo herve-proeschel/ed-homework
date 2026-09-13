@@ -10,6 +10,7 @@ function App() {
   const {
     username,
     setUsername,
+    displayName,
     password,
     setPassword,
     isLoggedIn,
@@ -78,7 +79,7 @@ function App() {
         {isLoggedIn && (
           <div className="logged-in-bar">
             <span>
-              Connecté en tant que <strong>{username}</strong>
+              Connecté en tant que <strong>{displayName || username}</strong>
             </span>
             <button type="button" className="logout-btn" onClick={disconnect} title="Se déconnecter" aria-label="Se déconnecter">
               ⎋

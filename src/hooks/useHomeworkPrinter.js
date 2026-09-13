@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { EdClient, decodeBase64Utf8, getEleveAccounts } from '../services/edClient';
+import { EdClient, decodeBase64Utf8, getEleveAccounts, getAccountFullName } from '../services/edClient';
 import {
   saveSession,
   restoreSession,
@@ -26,6 +26,7 @@ export function useHomeworkPrinter() {
   const eleveResolverRef = useRef(null);
 
   const [printDays, setPrintDays] = useState(null);
+  const [displayName, setDisplayName] = useState('');
 
   const eleveListRef = useRef([]);
   const selectedEleveIdRef = useRef(null);
@@ -48,6 +49,7 @@ export function useHomeworkPrinter() {
         selectedId: String(saved.selectedEleveId ?? eleveListRef.current[0].id),
       });
     }
+    setDisplayName(saved.displayName || '');
     setIsLoggedIn(true);
     logStatus('Session restaurée, prêt à imprimer.');
   }, [logStatus]);
@@ -58,8 +60,9 @@ export function useHomeworkPrinter() {
       ...clientState,
       selectedEleveId: selectedEleveIdRef.current,
       eleveList: eleveListRef.current,
+      displayName,
     });
-  }, []);
+  }, [displayName]);
 
   const askQcm = useCallback((question, options) => {
     return new Promise((resolve, reject) => {
@@ -211,13 +214,14 @@ export function useHomeworkPrinter() {
 
       if (!isLoggedIn) {
         const accountData = await performLogin();
+        setDisplayName(getAccountFullName(accountData));
+        setIsLoggedIn(true);
         logStatus("Sélection de l'élève...");
         eleveId = await chooseEleve(accountData);
 
         if (!eleveId) throw new Error('Profil élève introuvable sur ce compte.');
 
         selectedEleveIdRef.current = eleveId;
-        setIsLoggedIn(true);
         persistSession();
       }
 
@@ -278,12 +282,14 @@ export function useHomeworkPrinter() {
     setPrintDays(null);
     clearSession();
     setPassword('');
+    setDisplayName('');
     logStatus('Vous êtes déconnecté.');
   }, [logStatus]);
 
   return {
     username,
     setUsername,
+    displayName,
     password,
     setPassword,
     isLoggedIn,
