@@ -1,275 +1,160 @@
- # Architecture d'infrastructure
+# Architecture d'infrastructure
 
- ## 1. Périmètre et état du projet
+## 1. Perimetre et etat actuel
 
- Cette application est une SPA React statique. Le frontend peut être publié sur
- GitHub Pages, mais le navigateur ne peut pas appeler directement l'API privée
- d'ÉcoleDirecte : l'API ne fournit pas les en-têtes CORS nécessaires pour une
- origine GitHub Pages.
+`ed-homework` est une SPA React 100 % cote client, construite avec Vite et hebergeable comme site statique. L'application fonctionne avec un relais Cloudflare Worker deploye a l'adresse suivante :
 
- Le dépôt contient aujourd'hui le squelette Vite et la documentation du flux
- ÉcoleDirecte. Le Worker décrit ci-dessous est l'architecture cible à mettre en
- place lorsque le client API sera implémenté. Il ne faut pas considérer ce
- relais comme déjà déployé simplement parce qu'il est documenté ici.
+```text
+https://ed-cors-proxy.herve-proeschel.workers.dev
+```
 
- ## 2. Architecture cible
+Le navigateur n'appelle pas directement l'API privee d'EcoleDirecte. Le client `src/services/edClient.js` appelle le Worker, qui relaie les requetes vers `https://api.ecoledirecte.com`.
 
- ```mermaid
- flowchart LR
-		 U[Utilisateur] -->|HTTPS| P[GitHub Pages\nSPA React / fichiers statiques]
-		 P -->|HTTPS + CORS contrôlé| W[Cloudflare Worker\nAPI façade]
-		 W -->|HTTPS POST\nrequêtes autorisées| E[ÉcoleDirecte API\napi.ecoledirecte.com/v3]
+Le Worker est present dans `cloudflare.js`. Son deploiement est manuel et declenche par le workflow GitHub Actions `Deploy Cloudflare Worker`; il n'y a pas de deploiement automatique a chaque push dans ce workflow.
 
-		 W -.-> RL[Rate limiting\npar IP + route]
-		 W -.-> O[Logs minimisés\nAnalytics / Workers Logs]
-		 W -.-> S[Secrets / variables\nCloudflare]
- ```
+## 2. Architecture implementee
 
- ### Responsabilité des composants
+```mermaid
+flowchart LR
+    U[Utilisateur] --> B[Navigateur]
+    B -->|HTTPS JSON / form-urlencoded| P[Cloudflare Worker\ned-cors-proxy]
+    P -->|HTTPS| E[API EcoleDirecte\napi.ecoledirecte.com]
+    B -->|GET assets| H[Hebergement statique\nGitHub Pages ou autre]
+    B -.-> SS[sessionStorage\nsession courante]
+    B -.-> LS[localStorage\nidentifiant + validation FA]
+```
 
- | Composant | Responsabilité | Ne doit pas faire |
- | --- | --- | --- |
- | GitHub Pages | Servir le bundle React, les assets et le manifeste PWA | Contenir un secret, stocker un mot de passe ou appeler directement ÉcoleDirecte |
- | Navigateur | Collecter les identifiants, conserver éventuellement le jeton de session et afficher les données | Faire confiance à une origine arbitraire ou exposer le jeton dans une URL |
- | Cloudflare Worker | Vérifier l'origine, filtrer les routes, relayer les requêtes, gérer CORS et les erreurs | Persister les identifiants, mettre en cache les réponses privées ou devenir un proxy ouvert |
- | ÉcoleDirecte | Authentifier l'utilisateur et fournir les données du compte | Être appelée depuis le navigateur sans relais CORS |
+| Composant | Responsabilite actuelle |
+| --- | --- |
+| SPA React | Afficher la connexion, le parcours MFA, la selection d'un eleve, les devoirs et l'impression. |
+| `EdClient` | Maintenir les tokens et cookies necessaires, construire les requetes EcoleDirecte et decoder les reponses. |
+| `sessionStorage` | Conserver la session active, le profil selectionne, la liste des eleves et le nom affiche. |
+| `localStorage` | Conserver l'identifiant saisi et la validation FA retournee par le parcours 2FA. |
+| Cloudflare Worker | Ajouter les en-tetes attendus par EcoleDirecte, transmettre le corps et exposer les en-tetes de session au navigateur. |
+| EcoleDirecte | Authentifier l'utilisateur et fournir les comptes, le cahier de texte et ses details. |
+| Service worker | Mettre en cache le shell et les assets de la SPA en production; les requetes API restent reseau. |
 
- Le Worker n'est pas un serveur applicatif classique et ne nécessite pas de
- base de données pour ce cas d'usage. Cette absence de persistance réduit la
- surface d'exposition : les identifiants et le `X-Token` transitent pendant la
- requête, mais ne sont pas enregistrés par le Worker.
+Le Worker ne contient pas de base de donnees et ne persiste pas la session. Les tokens, cookies et identifiants sont geres par le navigateur et transmis au Worker pendant les appels.
 
- ## 3. Flux de production
+## 3. Flux applicatif
 
- ### 3.1 Chargement de l'application et appel API
+### 3.1 Initialisation et authentification
 
- ```mermaid
- sequenceDiagram
-		 autonumber
-		 participant B as Navigateur
-		 participant G as GitHub Pages
-		 participant W as Cloudflare Worker
-		 participant E as API ÉcoleDirecte
+```mermaid
+sequenceDiagram
+    participant B as Navigateur / SPA
+    participant S as sessionStorage
+    participant W as Worker
+    participant E as EcoleDirecte
 
-		 B->>G: GET /ed-homework/
-		 G-->>B: index.html + bundle React
-		 B->>W: OPTIONS /login.awp\nOrigin: https://<user>.github.io
-		 W-->>B: CORS autorisé + méthodes/en-têtes autorisés
-		 B->>W: POST /login.awp\nContent-Type: application/x-www-form-urlencoded
-		 W->>E: POST /v3/login.awp\nBody data=...
-		 E-->>W: Réponse d'authentification
-		 W-->>B: Réponse relayée\nAccess-Control-Allow-Origin exact
-		 B->>W: POST /eleves/...\nX-Token: <token>
-		 W->>E: POST /v3/eleves/...\nX-Token: <token>
-		 E-->>W: Données du cahier de texte
-		 W-->>B: Données JSON sans mise en cache
- ```
+    B->>S: Restaure la session si elle existe
+    B->>W: GET /v3/login.awp?gtk=1&v=4.101.4
+    W->>E: Relaye la requete GTK
+    E-->>W: GTK, cookies et reponse
+    W-->>B: Reponse + x-all-cookies
+    B->>W: POST /v3/login.awp?v=4.101.4\ndata=...
+    W->>E: Relaye identifiant, mot de passe et cookies
+    E-->>W: Token ou code 250
+    alt Validation 2FA requise
+        B->>W: POST /v3/connexion/doubleauth.awp?verbe=get
+        W->>E: Relaye la demande
+        E-->>W: Question et propositions encodees
+        W-->>B: Question affichee dans QcmModal
+        B->>W: POST ...doubleauth.awp?verbe=post
+        E-->>W: Validation FA / token 2FA
+        B->>W: Nouvelle authentification
+    end
+    W-->>B: Token X-Token et donnees du compte
+    B->>S: Sauvegarde de la session
+```
 
- Le Worker doit relayer le corps `application/x-www-form-urlencoded` sans le
- transformer. Le payload attendu par ÉcoleDirecte est de la forme :
+`EdClient` utilise la version d'API `4.101.4` dans la query string. Les requetes sont envoyees en `application/x-www-form-urlencoded` avec un champ `data` contenant le JSON du payload. Les appels authentifies transmettent `X-Token`; le flux de connexion peut aussi transmettre `x-gtk`, `x-cookies` et `2fa-token`.
 
- ```text
- data={"identifiant":"...","motdepasse":"..."}
- ```
+### 3.2 Selection et recuperation des devoirs
 
- Pour les appels authentifiés, le Worker transmet `X-Token` vers l'API amont.
- Le token reste dans un en-tête et ne doit jamais être ajouté à la query string,
- à une URL de redirection ou à un message de log.
+Apres la connexion, les profils eleves sont extraits de la reponse du compte. `useEleveSelection` affiche `EleveModal` et conserve l'identifiant choisi. L'application appelle ensuite, pour les dates futures uniquement :
 
- ### 3.2 Flux MFA / 2FA
+```text
+POST /v3/Eleves/{eleveId}/cahierdetexte.awp?verbe=get
+POST /v3/Eleves/{eleveId}/cahierdetexte/{date}.awp?verbe=get
+```
 
- ```mermaid
- sequenceDiagram
-		 participant U as Utilisateur
-		 participant A as SPA
-		 participant W as Worker
-		 participant E as ÉcoleDirecte
+Les details sont accumules dans `printDays`. Les contenus de devoirs encodes en Base64 sont decodes avant affichage dans `HomeWorkView`. Les reponses signalant une session expiree declenchent une nouvelle authentification si le mot de passe est encore present en memoire; sinon la session locale est supprimee et l'utilisateur doit se reconnecter.
 
-		 U->>A: Saisie identifiant + mot de passe
-		 A->>W: POST /login.awp
-		 W->>E: Relai de la demande
-		 E-->>W: Succès ou demande de validation MFA
-		 W-->>A: Réponse sans modification métier
-		 A-->>U: Demande de code / validation
-		 U->>A: Saisie du code MFA
-		 A->>W: POST route MFA prévue par l'API
-		 W->>E: Relai avec le contexte requis
-		 E-->>W: X-Token et profil, ou erreur
-		 W-->>A: Résultat d'authentification
- ```
+### 3.3 Impression
 
- Le Worker doit rester transparent pour les statuts et le format de réponse
- nécessaires au MFA. La logique d'interface et l'état temporaire du parcours
- restent dans la SPA, sauf exigence contraire de l'API ÉcoleDirecte.
+`HomeWorkView` rend les devoirs dans `#printView`. Le bouton d'impression appelle `window.print()`. Les regles `@media print` masquent l'interface et formatent les jours et les matieres pour une sortie papier ou PDF. L'evenement `afterprint` remet a jour le message d'etat.
 
- ## 4. Routage du Worker
+## 4. Worker Cloudflare actuel
 
- Une URL dédiée est préférable à un proxy générique, par exemple :
+Le Worker de `cloudflare.js` est un relais HTTP generique :
 
- ```text
- https://api.example.fr/ecoledirecte/*
- ```
+1. Il repond aux preflights `OPTIONS`.
+2. Il construit l'URL amont avec le chemin et la query string recus.
+3. Il force les en-tetes `Host`, `Origin`, `Referer`, `Accept` et `User-Agent` attendus par EcoleDirecte.
+4. Il reconstitue `Cookie` depuis `x-cookies` et `x-gtk`.
+5. Il relaie `2fa-token` et le corps de la requete.
+6. Il recopie la reponse et expose `X-Token`, `2fa-token`, `x-all-cookies` et `x-gtk` au navigateur.
 
- ou, pour un premier déploiement :
+Les cookies `Set-Cookie` retournes par EcoleDirecte sont reduits aux paires nom-valeur puis renvoyes dans `x-all-cookies`, afin que `EdClient` puisse les conserver hors du mecanisme de cookies du navigateur.
 
- ```text
- https://ed-homework-api.<account>.workers.dev/*
- ```
+Le contrat reel du Worker est plus large que les seules routes utilisees par l'application. Il ne comporte actuellement ni allowlist d'origines, ni allowlist de routes, ni limitation de debit integree. Le CORS utilise `Access-Control-Allow-Origin: *`, y compris pour les reponses API.
 
- Le Worker ajoute le préfixe `/v3` côté amont et ne rend publiques que les
- routes réellement utilisées par l'application. Exemple de table de routage :
+## 5. Stockage et securite
 
- | Route publique | Méthode | Route amont | Cache |
- | --- | --- | --- | --- |
- | `/login.awp` | `POST` | `/v3/login.awp` | Interdit |
- | `/auth/*` | `POST` | `/v3/auth/*` | Interdit |
- | `/eleves/*` | `POST` | `/v3/eleves/*` | Interdit |
- | Toute autre route | Toutes | Refus `404` ou `405` | N/A |
+### Donnees conservees dans le navigateur
 
- Cette liste doit être adaptée aux routes réellement consommées par le client.
- Il ne faut pas accepter une URL amont fournie par l'utilisateur : sinon le
- Worker devient un open proxy exploitable pour contourner des contrôles ou
- générer du trafic vers des tiers.
+* `sessionStorage.ed_session` contient le token actif, le token 2FA, GTK, les cookies reduits, l'eleve choisi, la liste des eleves et le nom affiche.
+* `localStorage.ed_user` contient uniquement l'identifiant pour pre-remplir le formulaire.
+* `localStorage.ed_fa` contient la reponse FA memorisee par le parcours MFA.
+* Le mot de passe est conserve uniquement dans l'etat React pendant la session de la page; il n'est pas ecrit dans le stockage local.
 
- ## 5. CORS et contrôle des origines
+La deconnexion et l'expiration de session recreent `EdClient`, effacent la session et retirent les donnees d'authentification de `sessionStorage`. Le service worker ne met pas en cache les appels API ni les reponses privees.
 
- Le Worker doit comparer l'en-tête `Origin` à une allowlist exacte :
+### Limites actuelles et durcissement a prevoir
 
- ```text
- https://<user>.github.io
- https://www.example.fr             # seulement si un domaine custom existe
- http://localhost:5173              # développement local uniquement
- ```
+Le relais est public et generique. Toute personne qui connait son URL peut tenter de l'utiliser, et `Access-Control-Allow-Origin: *` ne fournit pas de restriction d'origine. Les headers de session sont necessaires au fonctionnement actuel, mais ils augmentent la surface d'exposition du relais.
 
- Règles recommandées :
+Avant une exposition plus large, le Worker devrait au minimum :
 
- * répondre à `OPTIONS` avec `204` pour le préflight ;
- * renvoyer `Access-Control-Allow-Origin` uniquement avec l'origine validée ;
- * renvoyer `Access-Control-Allow-Methods: POST, OPTIONS` ;
- * renvoyer `Access-Control-Allow-Headers: Content-Type, X-Token` ;
- * ajouter `Vary: Origin` ;
- * ne pas utiliser `Access-Control-Allow-Origin: *` avec des données de session ;
- * refuser les origines absentes ou inconnues pour les routes API.
+* limiter les methodes et chemins aux appels effectivement utilises;
+* remplacer `*` par une allowlist d'origines connue;
+* limiter la taille et la duree des requetes;
+* mettre en place un rate limiting sur login et MFA;
+* eviter de journaliser les corps, tokens, cookies et mots de passe;
+* ajouter des tests de contrat pour les headers exposes et les erreurs amont.
 
- Le CORS n'est pas une authentification. Il empêche principalement un site
- tiers de lire les réponses dans le navigateur ; il faut donc le compléter par
- des limites de débit et par un filtrage strict des routes.
+## 6. Developpement et deploiement
 
- ## 6. Sécurité et confidentialité
+### Frontend
 
- ### Données sensibles
+```bash
+npm install
+npm run dev
+npm run lint
+npm test
+npm run build
+```
 
- * Le mot de passe est envoyé uniquement sur une requête HTTPS vers le Worker,
-	 puis relayé vers ÉcoleDirecte.
- * Le Worker ne l'écrit ni dans KV, ni dans D1, ni dans R2, ni dans un log.
- * Le frontend peut conserver le `X-Token` en mémoire. Si une persistance est
-	 nécessaire, `sessionStorage` est préférable à `localStorage` pour réduire sa
-	 durée de vie ; dans les deux cas, une compromission XSS pourrait le lire.
- * Les messages d'erreur côté client doivent être utiles sans refléter le corps
-	 complet de la requête ni les en-têtes d'authentification.
+Le fichier `vite.config.js` gere la base de deploiement et genere le service worker `dist/sw.js` pendant le build. Aucun proxy Vite vers EcoleDirecte n'est configure dans la version actuelle : le frontend utilise le Worker configure en dur dans `src/services/edClient.js`, en developpement comme en production.
 
- ### Mesures Worker
+### Worker
 
- 1. Autoriser uniquement `POST` et `OPTIONS` sur les routes connues.
- 2. Limiter la taille du corps entrant et le délai amont.
- 3. Appliquer un rate limit plus strict sur la connexion et le MFA que sur la
-		consultation du cahier de texte.
- 4. Ne jamais activer le cache Cloudflare sur les réponses contenant des données
-		ou des tokens.
- 5. Supprimer les en-têtes hop-by-hop et ne recopier depuis l'amont que les
-		en-têtes nécessaires.
- 6. Ne pas journaliser `data`, `X-Token`, les cookies ou les réponses complètes.
- 7. Ajouter des alertes sur les pics de `401`, `403`, `429` et `5xx`.
+Le workflow `.github/workflows/deploy-worker.yml` est manuel et utilise `cloudflare/wrangler-action@v3` avec la commande :
 
- ### Limite importante
+```text
+wrangler deploy cloudflare.js --name ed-cors-proxy
+```
 
- Un Worker public ne peut pas empêcher un utilisateur de reproduire les appels
- avec son propre compte. Le relais protège le navigateur contre le problème
- CORS et réduit l'exposition, mais il ne constitue pas un coffre-fort pour les
- identifiants. La confiance métier reste celle d'ÉcoleDirecte.
+Il attend les secrets d'environnement GitHub `cloudflare-production` : `CLOUDFLARE_API_TOKEN` et `CLOUDFLARE_ACCOUNT_ID`. Le token Cloudflare ne doit jamais etre place dans le depot ni dans le bundle frontend.
 
- ## 7. Développement local
+## 7. Verification avant publication
 
- En local, deux modèles sont possibles :
-
- ```mermaid
- flowchart TD
-		 D[SPA Vite localhost:5173]
-		 D -->|/api-ed/*| V[Vite dev proxy]
-		 V --> E[API ÉcoleDirecte]
-
-		 D2[SPA Vite localhost:5173]
-		 D2 -->|HTTPS| W[Worker Cloudflare de dev]
-		 W --> E
- ```
-
- Le second modèle est le plus fidèle à la production. Il évite qu'un bug de
- proxy Vite masque un problème du Worker. Si le proxy Vite est conservé, sa
- cible et ses règles doivent rester documentées et ne doivent pas être
- utilisées comme solution de production.
-
- ## 8. Déploiement Cloudflare
-
- Le Worker peut être déployé avec Wrangler. Exemple minimal de configuration :
-
- ```toml
- name = "ed-homework-api"
- main = "src/worker.js"
- compatibility_date = "2026-09-12"
-
- [vars]
- UPSTREAM_ORIGIN = "https://api.ecoledirecte.com"
- ```
-
- L'allowlist d'origines et les paramètres non secrets peuvent être des variables
- d'environnement par environnement (`dev`, `staging`, `production`). Aucun mot
- de passe ÉcoleDirecte ne doit être placé dans `wrangler.toml`, GitHub Actions
- ou le dépôt. Si un secret devient nécessaire, il doit être fourni par
- `wrangler secret put` et lu uniquement côté Worker.
-
- Pipeline recommandé :
-
- ```mermaid
- flowchart LR
-		 C[Commit] --> CI[GitHub Actions]
-		 CI --> T[Tests + lint + build SPA]
-		 T --> PG[Déploiement GitHub Pages]
-		 T --> WD[wrangler deploy]
-		 WD --> CF[Cloudflare Worker production]
- ```
-
- Le déploiement du frontend et celui du Worker peuvent évoluer séparément. Il
- faut toutefois versionner ensemble le contrat de routes publiques et le client
- API afin d'éviter de publier une SPA qui appelle une route absente du Worker.
-
- ## 9. Observabilité et exploitation
-
- Les logs doivent être corrélables sans être sensibles. Un identifiant de
- requête aléatoire peut être généré par le Worker et renvoyé dans
- `X-Request-Id`; il ne doit pas contenir le token ou l'identité de l'utilisateur.
-
- À surveiller :
-
- * latence Worker -> ÉcoleDirecte ;
- * taux de réponses `401`, `403`, `429` et `5xx` ;
- * erreurs CORS et préflights ;
- * volume par route et par adresse IP ;
- * indisponibilité ou changement de contrat de l'API amont.
-
- Les réponses privées ne doivent pas être placées dans le cache HTTP. Les
- éventuels retries doivent être très prudents : une nouvelle tentative de login
- ou de MFA peut répéter une opération sensible. Par défaut, ne pas retry les
- `POST` d'authentification.
-
- ## 10. Checklist de mise en production
-
- - [ ] Déployer le Worker avec une URL HTTPS stable.
- - [ ] Configurer l'allowlist CORS sur les origines réelles uniquement.
- - [ ] Implémenter la liste blanche des routes et méthodes.
- - [ ] Vérifier le relais du `Content-Type`, du corps `data=...` et de `X-Token`.
- - [ ] Désactiver le cache sur toutes les réponses API.
- - [ ] Ajouter les limites de taille, de délai et de débit.
- - [ ] Vérifier qu'aucun log ne contient mot de passe, payload ou token.
- - [ ] Tester login, MFA, changement de profil et expiration de session.
- - [ ] Tester depuis le domaine GitHub Pages réel, pas uniquement depuis localhost.
- - [ ] Prévoir une procédure de révocation/changement si ÉcoleDirecte modifie son API.
+- [ ] `npm run lint` passe.
+- [ ] `npm test` passe.
+- [ ] `npm run build` genere le bundle et `dist/sw.js`.
+- [ ] Le Worker repond au preflight et expose les headers necessaires.
+- [ ] Login standard, MFA, selection d'un eleve et recuperation des devoirs fonctionnent avec un compte de test.
+- [ ] L'expiration de session efface bien le stockage de session.
+- [ ] L'impression fonctionne en navigateur et en export PDF.
+- [ ] Les restrictions CORS, de routes et de debit sont traitees avant un deploiement public plus large.
