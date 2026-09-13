@@ -53,3 +53,15 @@ npm install
 
 # Démarrage du serveur de développement
 npm run dev
+```
+
+### Déployer le proxy Cloudflare
+
+Le proxy `cloudflare.js` est déployé par le workflow GitHub Actions **Deploy Cloudflare Worker**. Ce workflow est manuel : il ne s'exécute pas lors d'un push.
+
+Dans les paramètres du dépôt GitHub, créez l'environnement `cloudflare-production`, activez une approbation obligatoire pour cet environnement, puis ajoutez ces secrets d'environnement :
+
+* `CLOUDFLARE_API_TOKEN` : un token API Cloudflare limité au compte et au service Workers `ed-cors-proxy`, avec la permission `Workers Scripts: Edit`.
+* `CLOUDFLARE_ACCOUNT_ID` : l'identifiant du compte Cloudflare `xxx`.
+
+Pour déployer, ouvrez **Actions > Deploy Cloudflare Worker > Run workflow**. GitHub demandera l'approbation de l'environnement avant d'utiliser les secrets.
