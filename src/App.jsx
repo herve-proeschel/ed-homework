@@ -25,7 +25,7 @@ function App() {
     buildPrintHtml,
     run,
     afterPrint,
-    reconnect,
+    disconnect,
     restoreFromStorage,
   } = useHomeworkPrinter();
 
@@ -44,43 +44,45 @@ function App() {
       <div className="container" id="appContainer">
         <h1>Cahier de Texte</h1>
 
-        <div className="form-group">
-          <label htmlFor="username">Identifiant ÉcoleDirecte</label>
-          <input
-            type="text"
-            id="username"
-            autoComplete="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-        </div>
-
         {!isLoggedIn && (
-          <div className="form-group">
-            <label htmlFor="password">Mot de passe</label>
-            <input
-              type="password"
-              id="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+          <>
+            <div className="form-group">
+              <label htmlFor="username">Identifiant ÉcoleDirecte</label>
+              <input
+                type="text"
+                id="username"
+                autoComplete="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="password">Mot de passe</label>
+              <input
+                type="password"
+                id="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+
+            <button type="button" className="main-btn" onClick={run} disabled={busy}>
+              Connectez vous
+            </button>
+          </>
         )}
 
-        <button type="button" className="main-btn" onClick={run} disabled={busy}>
-          🖨️ Imprimer Devoirs À Venir
-        </button>
-
         {isLoggedIn && (
-          <button
-            type="button"
-            className="main-btn"
-            style={{ backgroundColor: '#64748b' }}
-            onClick={reconnect}
-          >
-            🔄 Se reconnecter
-          </button>
+          <div className="logged-in-bar">
+            <span>
+              Connecté en tant que <strong>{username}</strong>
+            </span>
+            <button type="button" className="logout-btn" onClick={disconnect} title="Se déconnecter" aria-label="Se déconnecter">
+              ⎋
+            </button>
+          </div>
         )}
 
         <QcmModal qcm={qcm} onAnswer={answerQcm} />

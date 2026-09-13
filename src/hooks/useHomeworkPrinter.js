@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { EdClient, decodeBase64Utf8, getEleveAccounts } from '../services/edClient';
 import {
   saveSession,
@@ -29,6 +29,7 @@ export function useHomeworkPrinter() {
 
   const eleveListRef = useRef([]);
   const selectedEleveIdRef = useRef(null);
+  const runRef = useRef(null);
 
   const logStatus = useCallback((msg, isError = false) => {
     setStatus(msg);
@@ -41,6 +42,12 @@ export function useHomeworkPrinter() {
     clientRef.current.restoreState(saved);
     selectedEleveIdRef.current = saved.selectedEleveId;
     eleveListRef.current = saved.eleveList || [];
+    if (eleveListRef.current.length > 0) {
+      setEleveModal({
+        eleves: eleveListRef.current,
+        selectedId: String(saved.selectedEleveId ?? eleveListRef.current[0].id),
+      });
+    }
     setIsLoggedIn(true);
     logStatus('Session restaurée, prêt à imprimer.');
   }, [logStatus]);
@@ -99,8 +106,16 @@ export function useHomeworkPrinter() {
 
   const confirmEleve = useCallback(() => {
     setEleveModal((prev) => {
-      if (prev) eleveResolverRef.current?.(prev.selectedId);
-      return null;
+      if (prev) {
+        selectedEleveIdRef.current = prev.selectedId;
+        if (eleveResolverRef.current) {
+          eleveResolverRef.current(prev.selectedId);
+        } else {
+          runRef.current?.();
+        }
+        eleveResolverRef.current = null;
+      }
+      return prev;
     });
   }, []);
 
@@ -241,6 +256,10 @@ export function useHomeworkPrinter() {
     }
   }, [username, password, isLoggedIn, performLogin, chooseEleve, persistSession, logStatus]);
 
+  useEffect(() => {
+    runRef.current = run;
+  }, [run]);
+
   const afterPrint = useCallback(async () => {
     setPrintDays(null);
     setBusy(false);
@@ -255,14 +274,15 @@ export function useHomeworkPrinter() {
     }
   }, [isLoggedIn, logStatus, askEleve, persistSession, run]);
 
-  const reconnect = useCallback(() => {
+  const disconnect = useCallback(() => {
     clientRef.current = new EdClient();
     setIsLoggedIn(false);
     selectedEleveIdRef.current = null;
     eleveListRef.current = [];
+    setEleveModal(null);
     clearSession();
     setPassword('');
-    logStatus('Veuillez ressaisir votre mot de passe pour vous reconnecter.');
+    logStatus('Vous êtes déconnecté.');
   }, [logStatus]);
 
   return {
@@ -283,7 +303,7 @@ export function useHomeworkPrinter() {
     buildPrintHtml,
     run,
     afterPrint,
-    reconnect,
+    disconnect,
     restoreFromStorage,
   };
 }
