@@ -215,15 +215,28 @@
 }
 
 @media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
   #appContainer {
     display: none !important;
   }
 
+  #root {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
   #printView {
     display: block !important;
+    width: 100% !important;
+    max-width: none !important;
     font-family: Arial, sans-serif;
     color: #222;
-    margin: 16px;
+    margin: 0 !important;
     line-height: 1.4;
     background: #fff;
   }
