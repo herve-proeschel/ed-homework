@@ -37,7 +37,13 @@ export function useEleveSelection({ runRef }) {
     async (accountData) => {
       const eleves = getEleveAccounts(accountData);
       eleveListRef.current = eleves;
-      if (eleves.length === 0) return null;
+      if (eleves.length === 0) {
+        const studentAccount = accountData?.accounts?.[0];
+        const studentId = studentAccount?.id;
+        if (studentId == null) return null;
+        selectedEleveIdRef.current = String(studentId);
+        return String(studentId);
+      }
       return askEleve(eleves);
     },
     [askEleve],

@@ -1,10 +1,8 @@
-import { getElevePhotoSrc } from '../services/edClient';
+import HomeworkActions from './HomeworkActions';
 
 export default function EleveModal({ eleveModal, onSelect, onConfirm, onPrint, canPrint }) {
   if (!eleveModal) return null;
   const { eleves, selectedId } = eleveModal;
-  const selectedEleve = eleves.find((e) => String(e.id) === selectedId);
-  const photoSrc = selectedEleve ? getElevePhotoSrc(selectedEleve) : '';
 
   return (
     <div className="eleve-modal">
@@ -18,22 +16,7 @@ export default function EleveModal({ eleveModal, onSelect, onConfirm, onPrint, c
           </option>
         ))}
       </select>
-      <div className="action-row">
-        <button type="button" className="main-btn" onClick={onConfirm}>
-          Récupérer les devoirs
-        </button>
-        {canPrint && (
-          <button
-            type="button"
-            className="print-btn"
-            onClick={onPrint}
-            title="Imprimer"
-            aria-label="Imprimer"
-          >
-            🖨️
-          </button>
-        )}
-      </div>
+      <HomeworkActions onRetrieve={onConfirm} onPrint={onPrint} canPrint={canPrint} />
     </div>
   );
 }

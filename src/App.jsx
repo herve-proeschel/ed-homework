@@ -4,6 +4,7 @@ import StatusMessage from './components/StatusMessage';
 import QcmModal from './components/QcmModal';
 import EleveModal from './components/EleveModal';
 import HomeWorkView from './components/HomeWorkView';
+import HomeworkActions from './components/HomeworkActions';
 import ThemeMenu from './components/ThemeMenu';
 import { useHomeworkPrinter } from './hooks/useHomeworkPrinter';
 
@@ -98,6 +99,9 @@ function App() {
           onPrint={printHomework}
           canPrint={!!printDays}
         />
+        {isLoggedIn && !eleveModal && (
+          <HomeworkActions onRetrieve={run} onPrint={printHomework} canPrint={!!printDays} />
+        )}
 
         <StatusMessage message={status} isError={statusIsError} />
       </div>

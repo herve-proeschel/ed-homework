@@ -236,7 +236,7 @@ export function getEleveAccounts(data) {
   const fromProfiles = data.accounts.flatMap((a) => (a.profile && a.profile.eleves) || []);
   if (fromProfiles.length > 0) return fromProfiles;
   const eleves = data.accounts.filter((a) => a.typeCompte === 'E');
-  return eleves.length > 0 ? eleves : data.accounts;
+  return eleves;
 }
 
 export function getElevePhotoSrc(eleve) {
