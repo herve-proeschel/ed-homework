@@ -1,0 +1,51 @@
+.qcm-modal {
+  background: #fff;
+  border: 2px solid var(--primary);
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 16px;
+  text-align: left;
+}
+
+.qcm-option {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+  background: #f1f5f9;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.eleve-modal {
+  margin-top: 16px;
+  text-align: left;
+}
+
+.eleve-modal select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+.eleve-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  min-height: 40px;
+}
+
+.eleve-preview img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #cbd5e1;
+}

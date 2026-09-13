@@ -1,0 +1,106 @@
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  #appContainer {
+    display: none !important;
+  }
+
+  #root {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  #printView {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    font-family: Arial, sans-serif;
+    color: #222;
+    margin: 0 !important;
+    line-height: 1.4;
+    background: #fff;
+  }
+}
+
+#printView {
+  width: 100%;
+  max-width: 480px;
+  box-sizing: border-box;
+  margin-top: 16px;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+#printView img,
+#printView table {
+  max-width: 100%;
+  height: auto;
+}
+
+#printView table {
+  table-layout: fixed;
+}
+
+#printView .day-container {
+  margin-bottom: 24px;
+}
+
+#printView .day-title {
+  font-size: 1.15rem;
+  background-color: #0b4e84;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+#printView .subject-box {
+  border: 1px solid #ccc;
+  border-left: 5px solid #0b4e84;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+}
+
+#printView .subject-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  border-bottom: 1px dashed #eee;
+  padding-bottom: 4px;
+}
+
+#printView .subject-title {
+  font-weight: bold;
+  color: #0b4e84;
+}
+
+#printView .subject-meta {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+#printView .badge-eval {
+  background: #dc3545;
+  color: white;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-weight: bold;
+  font-size: 0.75rem;
+  margin-left: 6px;
+}
+
+#printView .subject-content {
+  font-size: 0.95rem;
+}
+
+@media print {
+  #printView .day-title {
+    background-color: #eee !important;
+    color: #000 !important;
+    border: 1px solid #aaa;
+  }
+}
