@@ -31,6 +31,11 @@ export default {
       modifiedHeaders.set("x-gtk", gtkValue);
     }
 
+    const twoFaToken = request.headers.get("2fa-token") || request.headers.get("x-2fa-token");
+    if (twoFaToken) {
+      modifiedHeaders.set("2fa-token", twoFaToken);
+    }
+
     let cookieHeader = customCookies || request.headers.get("Cookie") || "";
     if (gtkValue && !cookieHeader.includes("GTK=")) {
       cookieHeader = (cookieHeader ? cookieHeader + "; " : "") + `GTK=${gtkValue}`;
@@ -49,6 +54,11 @@ export default {
       const newResponseHeaders = new Headers(response.headers);
       newResponseHeaders.set("Access-Control-Allow-Origin", "*");
       newResponseHeaders.set("Access-Control-Expose-Headers", "X-Token, x-token, 2fa-token, x-all-cookies, Set-Cookie, x-gtk");
+
+      const returnedTwoFaToken = response.headers.get("2fa-token") || response.headers.get("x-2fa-token");
+      if (returnedTwoFaToken) {
+        newResponseHeaders.set("2fa-token", returnedTwoFaToken);
+      }
 
       // Capture tous les Set-Cookie
       let cookieArray = [];

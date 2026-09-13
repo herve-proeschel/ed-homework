@@ -105,7 +105,7 @@ export class EdClient {
       this.activeToken = refreshedToken;
     }
 
-    const twoFaToken = response.headers.get('2fa-token');
+    const twoFaToken = response.headers.get('2fa-token') || response.headers.get('x-2fa-token');
     if (twoFaToken) {
       this.twoFaToken = twoFaToken;
     }
