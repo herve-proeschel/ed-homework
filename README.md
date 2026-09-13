@@ -28,7 +28,7 @@ Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou
 ## Architecture & Contraintes Techniques
 
 ### 1. Relais Cloudflare et CORS
-L'API privée d'ÉcoleDirecte ne permet pas les appels directs depuis le navigateur. L'application utilise donc le Worker configuré en dur dans `src/services/edClient.js` :
+L'API privée d'ÉcoleDirecte ne permet pas les appels directs depuis le navigateur. L'application utilise le Worker défini par la variable d'environnement `VITE_PROXY_BASE_URL` :
 
 ```text
 https://ed-cors-proxy.herve-proeschel.workers.dev
@@ -68,7 +68,7 @@ npm run build
 npm run preview
 ```
 
-Le build accepte `VITE_BASE_URL` pour définir le chemin de base d'un déploiement statique. Sans cette variable, la base est `/`. Le build génère aussi `dist/sw.js`, qui précache les fichiers statiques présents dans `dist`.
+Le build accepte `VITE_BASE_URL` pour définir le chemin de base d'un déploiement statique. Sans cette variable, la base est `/`. Il nécessite aussi `VITE_PROXY_BASE_URL`, disponible dans `.env.example` pour le développement local. Le build génère aussi `dist/sw.js`, qui précache les fichiers statiques présents dans `dist`.
 
 ### Déployer le proxy Cloudflare
 
@@ -83,6 +83,8 @@ Dans les paramètres du dépôt GitHub, créez l'environnement `cloudflare-produ
 Pour déployer, ouvrez **Actions > Deploy Cloudflare Worker > Run workflow**. GitHub demandera l'approbation de l'environnement avant d'utiliser les secrets.
 
 Ajoutez également les secrets d'environnement `ALLOWED_ORIGINS` et `CLOUDFLARE_WORKER_NAME`. Par exemple, `ALLOWED_ORIGINS` peut contenir `https://herve-proeschel.github.io,http://localhost:5173,http://127.0.0.1:5173` et `CLOUDFLARE_WORKER_NAME` peut contenir `ed-cors-proxy`. Le workflow injecte directement ces secrets dans la commande Wrangler; le nom du Worker et les origines autorisées ne sont pas codés dans le dépôt.
+
+Pour le workflow GitHub Pages, ajoutez également le secret `VITE_PROXY_BASE_URL` contenant l'URL publique du Worker. Comme cette valeur est utilisée par le navigateur, Vite l'intègre au JavaScript généré : elle ne doit donc pas contenir un secret réel.
 
 Le worker n'autorise que les routes et méthodes utilisées par l'application, limite les corps à 64 KiB et annule les appels amont après 10 secondes. Les tentatives de connexion sont limitées à 5 par minute et par adresse IP, et les réponses 2FA à 5 par 10 minutes. Pour un rate limiting distribué entre les instances Cloudflare, configurer les bindings `LOGIN_RATE_LIMITER` et `TWO_FA_RATE_LIMITER`; sans ces bindings, un limiteur mémoire local fournit un filet de sécurité non distribué.
 

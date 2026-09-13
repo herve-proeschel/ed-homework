@@ -1,4 +1,4 @@
-const PROXY_BASE_URL = 'https://ed-cors-proxy.herve-proeschel.workers.dev';
+const PROXY_BASE_URL = import.meta.env.VITE_PROXY_BASE_URL;
 const ED_VERSION = '4.101.4';
 
 export function decodeBase64Utf8(str) {
@@ -89,6 +89,10 @@ export class EdClient {
   }
 
   async apiCall(endpoint, method = 'POST', payload = {}, withToken = true) {
+    if (!PROXY_BASE_URL) {
+      throw new Error('VITE_PROXY_BASE_URL est obligatoire pour contacter le proxy');
+    }
+
     const cleanEndpoint = endpoint.replace(/^\/+/, '');
     const separator = cleanEndpoint.includes('?') ? '&' : '?';
     const endpointWithVersion = cleanEndpoint.includes('v=')
@@ -150,6 +154,10 @@ export class EdClient {
   }
 
   async initGtk() {
+    if (!PROXY_BASE_URL) {
+      throw new Error('VITE_PROXY_BASE_URL est obligatoire pour contacter le proxy');
+    }
+
     this.activeToken = '';
     this.twoFaToken = '';
     this.savedGtk = '';
