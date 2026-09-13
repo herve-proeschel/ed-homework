@@ -11,9 +11,6 @@ export default function EleveModal({ eleveModal, onSelect, onConfirm }) {
       <p>
         <strong>Choisissez un élève :</strong>
       </p>
-      <div className="eleve-preview">
-        {photoSrc && <img src={photoSrc} alt="" />}
-      </div>
       <select value={selectedId} onChange={(e) => onSelect(e.target.value)}>
         {eleves.map((eleve) => (
           <option key={eleve.id} value={eleve.id}>
