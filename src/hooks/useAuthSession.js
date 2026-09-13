@@ -41,7 +41,7 @@ export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, se
     setDisplayName(saved.displayName || '');
     setIsLoggedIn(true);
     logStatus('Session restaurée, prêt à imprimer.');
-  }, [logStatus, eleveListRef, selectedEleveIdRef, setEleveModal]);
+  }, [logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setDisplayName]);
 
   const persistSession = useCallback((displayNameOverride) => {
     const clientState = clientRef.current.getState();
@@ -140,7 +140,7 @@ export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, se
     setPassword('');
     setDisplayName('');
     logStatus('Vous êtes déconnecté.');
-  }, [logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays]);
+  }, [logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setDisplayName]);
 
   return {
     clientRef,

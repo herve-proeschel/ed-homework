@@ -231,12 +231,8 @@ export function getAccountFullName(data) {
 
 export function getEleveAccounts(data) {
   if (!data || !data.accounts) return [];
-  const directEleves = data.accounts.filter((a) => a.isELE === true);
-  if (directEleves.length > 0) return directEleves;
   const fromProfiles = data.accounts.flatMap((a) => (a.profile && a.profile.eleves) || []);
-  if (fromProfiles.length > 0) return fromProfiles;
-  const eleves = data.accounts.filter((a) => a.typeCompte === 'E');
-  return eleves;
+  return fromProfiles;
 }
 
 export function getElevePhotoSrc(eleve) {
