@@ -81,7 +81,9 @@ Dans les paramètres du dépôt GitHub, créez l'environnement `cloudflare-produ
 
 Pour déployer, ouvrez **Actions > Deploy Cloudflare Worker > Run workflow**. GitHub demandera l'approbation de l'environnement avant d'utiliser les secrets.
 
-Le relais est actuellement générique et répond avec `Access-Control-Allow-Origin: *`. Il ne limite ni les origines, ni les routes, ni le débit. Cette configuration est pratique pour le fonctionnement actuel, mais elle doit être durcie avant une exposition publique plus large.
+Ajoutez également le secret d'environnement `ALLOWED_ORIGINS`, par exemple `https://herve-proeschel.github.io,http://localhost:5173,http://127.0.0.1:5173`. Le workflow l'injecte comme variable Worker; aucune origine n'est codée en dur et le worker refuse toute requête si la variable est absente.
+
+Le worker n'autorise que les routes et méthodes utilisées par l'application, limite les corps à 64 KiB et annule les appels amont après 10 secondes. Les tentatives de connexion sont limitées à 5 par minute et par adresse IP, et les réponses 2FA à 5 par 10 minutes. Pour un rate limiting distribué entre les instances Cloudflare, configurer les bindings `LOGIN_RATE_LIMITER` et `TWO_FA_RATE_LIMITER`; sans ces bindings, un limiteur mémoire local fournit un filet de sécurité non distribué.
 
 ## Stockage et sécurité
 
@@ -94,11 +96,6 @@ Le Worker ne contient pas de base de données et ne persiste pas la session. La 
 
 ## Limites connues
 
-Avant une exposition plus large du Worker, prévoir au minimum :
+Le worker ne journalise aucun mot de passe, token, cookie ni corps de requête. Les erreurs renvoyées au navigateur sont génériques afin de ne pas divulguer le détail de l'amont.
 
-* une allowlist d'origines au lieu de `*` ;
-* une allowlist des méthodes et routes réellement utilisées ;
-* une limite de taille et de durée des requêtes ;
-* un rate limiting sur la connexion et la validation 2FA ;
-* l'absence de journalisation des mots de passe, tokens, cookies et corps de requêtes ;
-* des tests de contrat pour les en-têtes exposés et les erreurs de l'API amont.
+Pour la production, vérifier que `ALLOWED_ORIGINS` contient l'origine exacte affichée par GitHub Pages et configurer les deux bindings de rate limiting dans Cloudflare. Ne jamais ajouter de secret, de token Cloudflare ou de cookie dans une variable publique du frontend.

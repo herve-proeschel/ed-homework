@@ -22,7 +22,9 @@ jobs:
 
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
+        env:
+          ALLOWED_ORIGINS: ${{ secrets['ALLOWED_ORIGINS'] }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy cloudflare.js --name ed-cors-proxy
+          command: deploy cloudflare.js --name ed-cors-proxy --var ALLOWED_ORIGINS:$ALLOWED_ORIGINS

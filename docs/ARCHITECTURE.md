@@ -98,7 +98,7 @@ Le Worker de `cloudflare.js` est un relais HTTP generique :
 
 Les cookies `Set-Cookie` retournes par EcoleDirecte sont reduits aux paires nom-valeur puis renvoyes dans `x-all-cookies`, afin que `EdClient` puisse les conserver hors du mecanisme de cookies du navigateur.
 
-Le contrat reel du Worker est plus large que les seules routes utilisees par l'application. Il ne comporte actuellement ni allowlist d'origines, ni allowlist de routes, ni limitation de debit integree. Le CORS utilise `Access-Control-Allow-Origin: *`, y compris pour les reponses API.
+Le Worker limite le CORS aux origines de `ALLOWED_ORIGINS`, aux methodes et routes utilisees par l'application, et aux parametres de query attendus. `ALLOWED_ORIGINS` est injectee par le workflow depuis le secret de l'environnement GitHub `cloudflare-production`; aucune valeur par defaut n'est acceptee. Les corps sont limites a 64 KiB et l'appel vers l'amont a 10 secondes.
 
 ## 5. Stockage et securite
 
@@ -111,18 +111,11 @@ Le contrat reel du Worker est plus large que les seules routes utilisees par l'a
 
 La deconnexion et l'expiration de session recreent `EdClient`, effacent la session et retirent les donnees d'authentification de `sessionStorage`. Le service worker ne met pas en cache les appels API ni les reponses privees.
 
-### Limites actuelles et durcissement a prevoir
+### Limites et configuration de production
 
-Le relais est public et generique. Toute personne qui connait son URL peut tenter de l'utiliser, et `Access-Control-Allow-Origin: *` ne fournit pas de restriction d'origine. Les headers de session sont necessaires au fonctionnement actuel, mais ils augmentent la surface d'exposition du relais.
+Les tentatives de connexion sont limitees a 5 par minute et par adresse IP, et les validations 2FA a 5 par 10 minutes. Le Worker utilise les bindings Cloudflare `LOGIN_RATE_LIMITER` et `TWO_FA_RATE_LIMITER` lorsqu'ils sont configures; sinon un limiteur memoire local est utilise comme protection de secours, sans garantie distribuee.
 
-Avant une exposition plus large, le Worker devrait au minimum :
-
-* limiter les methodes et chemins aux appels effectivement utilises;
-* remplacer `*` par une allowlist d'origines connue;
-* limiter la taille et la duree des requetes;
-* mettre en place un rate limiting sur login et MFA;
-* eviter de journaliser les corps, tokens, cookies et mots de passe;
-* ajouter des tests de contrat pour les headers exposes et les erreurs amont.
+Le Worker ne journalise pas les corps, tokens, cookies ou mots de passe. Les reponses d'erreur sont generiques. Ajouter le secret d'environnement `ALLOWED_ORIGINS` avec les origines exactes autorisees et activer les deux bindings de rate limiting avant une exposition publique.
 
 ## 6. Developpement et deploiement
 
@@ -157,4 +150,5 @@ Il attend les secrets d'environnement GitHub `cloudflare-production` : `CLOUDFLA
 - [ ] Login standard, MFA, selection d'un eleve et recuperation des devoirs fonctionnent avec un compte de test.
 - [ ] L'expiration de session efface bien le stockage de session.
 - [ ] L'impression fonctionne en navigateur et en export PDF.
-- [ ] Les restrictions CORS, de routes et de debit sont traitees avant un deploiement public plus large.
+- [ ] `ALLOWED_ORIGINS` contient uniquement les origines attendues.
+- [ ] Les bindings `LOGIN_RATE_LIMITER` et `TWO_FA_RATE_LIMITER` sont actifs en production.
