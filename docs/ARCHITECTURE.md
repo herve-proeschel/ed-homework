@@ -136,8 +136,10 @@ Le fichier `vite.config.js` gere la base de deploiement et genere le service wor
 Le workflow `.github/workflows/deploy-worker.yml` est manuel et utilise `cloudflare/wrangler-action@v3` avec la commande :
 
 ```text
-wrangler deploy cloudflare.js --name ed-cors-proxy
+wrangler deploy --name "$CLOUDFLARE_WORKER_NAME"
 ```
+
+La configuration `wrangler.toml` definit le fichier d'entree et la `compatibility_date` requise par Wrangler. Le secret d'environnement `CLOUDFLARE_WORKER_NAME` fournit le nom du Worker au workflow.
 
 Il attend les secrets d'environnement GitHub `cloudflare-production` : `CLOUDFLARE_API_TOKEN` et `CLOUDFLARE_ACCOUNT_ID`. Le token Cloudflare ne doit jamais etre place dans le depot ni dans le bundle frontend.
 

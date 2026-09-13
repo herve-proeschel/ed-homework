@@ -78,10 +78,11 @@ Dans les paramètres du dépôt GitHub, créez l'environnement `cloudflare-produ
 
 * `CLOUDFLARE_API_TOKEN` : un token API Cloudflare limité au compte et au service Workers `ed-cors-proxy`, avec la permission `Workers Scripts: Edit`.
 * `CLOUDFLARE_ACCOUNT_ID` : l'identifiant du compte Cloudflare `xxx`.
+* `CLOUDFLARE_WORKER_NAME` : le nom du Worker Cloudflare à publier.
 
 Pour déployer, ouvrez **Actions > Deploy Cloudflare Worker > Run workflow**. GitHub demandera l'approbation de l'environnement avant d'utiliser les secrets.
 
-Ajoutez également le secret d'environnement `ALLOWED_ORIGINS`, par exemple `https://herve-proeschel.github.io,http://localhost:5173,http://127.0.0.1:5173`. Le workflow l'injecte comme variable Worker; aucune origine n'est codée en dur et le worker refuse toute requête si la variable est absente.
+Ajoutez également les secrets d'environnement `ALLOWED_ORIGINS` et `CLOUDFLARE_WORKER_NAME`. Par exemple, `ALLOWED_ORIGINS` peut contenir `https://herve-proeschel.github.io,http://localhost:5173,http://127.0.0.1:5173` et `CLOUDFLARE_WORKER_NAME` peut contenir `ed-cors-proxy`. Le workflow injecte ces valeurs au déploiement; le nom du Worker et les origines autorisées ne sont pas codés dans le dépôt.
 
 Le worker n'autorise que les routes et méthodes utilisées par l'application, limite les corps à 64 KiB et annule les appels amont après 10 secondes. Les tentatives de connexion sont limitées à 5 par minute et par adresse IP, et les réponses 2FA à 5 par 10 minutes. Pour un rate limiting distribué entre les instances Cloudflare, configurer les bindings `LOGIN_RATE_LIMITER` et `TWO_FA_RATE_LIMITER`; sans ces bindings, un limiteur mémoire local fournit un filet de sécurité non distribué.
 
