@@ -1,215 +1,41 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  EdClient,
-  decodeBase64Utf8,
-  getEleveAccounts,
-  getAccountFullName,
-  isSessionExpiredError,
-} from '../services/edClient';
-import {
-  saveSession,
-  restoreSession,
-  clearSession,
-  getSavedUsername,
-  saveUsername,
-  getSavedFa,
-  saveFa,
-} from '../services/sessionStorage';
-import { formatDay } from '../utils/formatDay';
+import { useCallback, useEffect, useRef } from 'react';
+import { getAccountFullName, isSessionExpiredError } from '../services/edClient';
+import { saveUsername } from '../services/sessionStorage';
+import { useStatusMessage } from './useStatusMessage';
+import { usePrintHomework } from './usePrintHomework';
+import { useEleveSelection } from './useEleveSelection';
+import { useAuthSession } from './useAuthSession';
 
 export function useHomeworkPrinter() {
-  const clientRef = useRef(new EdClient());
-  const [username, setUsername] = useState(() => getSavedUsername());
-  const [password, setPassword] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState('');
-  const [statusIsError, setStatusIsError] = useState(false);
-
-  const [qcm, setQcm] = useState(null); // { question, options }
-  const qcmResolverRef = useRef(null);
-
-  const [eleveModal, setEleveModal] = useState(null); // { eleves, selectedId }
-  const eleveResolverRef = useRef(null);
-
-  const [printDays, setPrintDays] = useState(null);
-  const [displayName, setDisplayName] = useState('');
-
-  const eleveListRef = useRef([]);
-  const selectedEleveIdRef = useRef(null);
   const runRef = useRef(null);
 
-  const logStatus = useCallback((msg, isError = false) => {
-    setStatus(msg);
-    setStatusIsError(isError);
-  }, []);
+  const { status, statusIsError, logStatus } = useStatusMessage();
 
-  const restoreFromStorage = useCallback(() => {
-    const saved = restoreSession();
-    if (!saved) return;
-    clientRef.current.restoreState(saved);
-    selectedEleveIdRef.current = saved.selectedEleveId;
-    eleveListRef.current = saved.eleveList || [];
-    if (eleveListRef.current.length > 0) {
-      setEleveModal({
-        eleves: eleveListRef.current,
-        selectedId: String(saved.selectedEleveId ?? eleveListRef.current[0].id),
-      });
-    }
-    setDisplayName(saved.displayName || '');
-    setIsLoggedIn(true);
-    logStatus('Session restaurée, prêt à imprimer.');
-  }, [logStatus]);
+  const { printDays, setPrintDays, buildPrintHtml, printHomework, afterPrint } = usePrintHomework({ logStatus });
 
-  const persistSession = useCallback(() => {
-    const clientState = clientRef.current.getState();
-    saveSession({
-      ...clientState,
-      selectedEleveId: selectedEleveIdRef.current,
-      eleveList: eleveListRef.current,
-      displayName,
-    });
-  }, [displayName]);
+  const { eleveModal, setEleveModal, eleveListRef, selectedEleveIdRef, selectEleveOption, confirmEleve, chooseEleve } =
+    useEleveSelection({ runRef });
 
-  const askQcm = useCallback((question, options) => {
-    return new Promise((resolve, reject) => {
-      qcmResolverRef.current = { resolve, reject };
-      setQcm({ question, options });
-    });
-  }, []);
-
-  const answerQcm = useCallback(
-    async (choice) => {
-      try {
-        const answerRes = await clientRef.current.answerQcm(choice);
-        setQcm(null);
-
-        let fa = null;
-        if (answerRes.data && answerRes.data.cn && answerRes.data.cv) {
-          fa = [answerRes.data];
-          saveFa(fa);
-        }
-
-        logStatus('Réinitialisation de la session (GTK)...');
-        await clientRef.current.initGtk();
-
-        logStatus('Reprise de l’authentification...');
-        const finalLogin = await clientRef.current.login(username, password, fa);
-        qcmResolverRef.current?.resolve(finalLogin.data);
-      } catch (err) {
-        qcmResolverRef.current?.reject(err);
-      }
-    },
-    [username, password, logStatus],
-  );
-
-  const askEleve = useCallback((eleves) => {
-    return new Promise((resolve) => {
-      eleveResolverRef.current = resolve;
-      setEleveModal({ eleves, selectedId: String(eleves[0]?.id ?? '') });
-    });
-  }, []);
-
-  const selectEleveOption = useCallback((id) => {
-    setEleveModal((prev) => (prev ? { ...prev, selectedId: id } : prev));
-  }, []);
-
-  const confirmEleve = useCallback(() => {
-    setEleveModal((prev) => {
-      if (prev) {
-        selectedEleveIdRef.current = prev.selectedId;
-        if (eleveResolverRef.current) {
-          eleveResolverRef.current(prev.selectedId);
-        } else {
-          runRef.current?.();
-        }
-        eleveResolverRef.current = null;
-      }
-      return prev;
-    });
-  }, []);
-
-  const chooseEleve = useCallback(
-    async (accountData) => {
-      const eleves = getEleveAccounts(accountData);
-      eleveListRef.current = eleves;
-      if (eleves.length === 0) return null;
-      return askEleve(eleves);
-    },
-    [askEleve],
-  );
-
-  const performLogin = useCallback(async () => {
-    logStatus('Initialisation session (GTK)...');
-    await clientRef.current.initGtk();
-
-    logStatus('Authentification...');
-    const fa = getSavedFa();
-    const res = await clientRef.current.login(username, password, fa);
-
-    if (res.code === 250) {
-      logStatus('Question de sécurité (2FA requise)...');
-      const qcmRes = await clientRef.current.getQcm();
-      if (qcmRes.code !== 200 || !qcmRes.data) {
-        throw new Error('Impossible de charger la question de sécurité.');
-      }
-      const question = decodeBase64Utf8(qcmRes.data.question);
-      const options = (qcmRes.data.propositions || []).map((p) => ({
-        value: p,
-        label: decodeBase64Utf8(p),
-      }));
-      return askQcm(question, options);
-    }
-
-    if (res.code !== 200 || !res.token) {
-      throw new Error(res.message || 'Identifiant ou mot de passe invalide.');
-    }
-
-    return res.data;
-  }, [username, password, logStatus, askQcm]);
-
-  function buildPrintHtml(daysData) {
-    let contentHtml = '';
-    daysData.forEach((day) => {
-      contentHtml += `<div class="day-container"><h2 class="day-title">${formatDay(day.date)}</h2>`;
-      let hwCount = 0;
-      (day.matieres || []).forEach((m) => {
-        const aFaire = m.aFaire;
-        if (!aFaire && (!m.contenuDeSeance || !m.contenuDeSeance.contenu)) return;
-        hwCount++;
-        const detailsHtml = decodeBase64Utf8(aFaire ? aFaire.contenu : '');
-        const dateDonne = aFaire && aFaire.donneLe ? `(Donné le ${formatDay(aFaire.donneLe)})` : '';
-        const isEval = aFaire && aFaire.interrogation ? '<span class="badge-eval">Contrôle</span>' : '';
-        contentHtml += `
-          <div class="subject-box">
-            <div class="subject-header">
-              <span class="subject-title">${m.matiere || 'Matière'}</span>
-              <span class="subject-meta">${dateDonne} ${isEval}</span>
-            </div>
-            <div class="subject-content">${detailsHtml || '<em>Sans consigne écrite</em>'}</div>
-          </div>`;
-      });
-      if (hwCount === 0) {
-        contentHtml += `<p style="font-style: italic; color: #666;">Aucun travail spécifique pour ce jour.</p>`;
-      }
-      contentHtml += `</div>`;
-    });
-    return contentHtml;
-  }
-
-  const handleSessionExpired = useCallback(
-    (msg = 'Votre session a expiré après une période d’inactivité. Veuillez saisir votre mot de passe pour vous reconnecter.') => {
-      clientRef.current = new EdClient();
-      setIsLoggedIn(false);
-      selectedEleveIdRef.current = null;
-      eleveListRef.current = [];
-      setEleveModal(null);
-      setPrintDays(null);
-      clearSession();
-      logStatus(msg, true);
-    },
-    [logStatus],
-  );
+  const {
+    clientRef,
+    username,
+    setUsername,
+    password,
+    setPassword,
+    isLoggedIn,
+    setIsLoggedIn,
+    busy,
+    setBusy,
+    displayName,
+    setDisplayName,
+    qcm,
+    answerQcm,
+    performLogin,
+    restoreFromStorage,
+    persistSession,
+    handleSessionExpired,
+    disconnect,
+  } = useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays });
 
   const run = useCallback(async () => {
     if (!username || (!isLoggedIn && !password)) {
@@ -323,32 +149,17 @@ export function useHomeworkPrinter() {
     persistSession,
     logStatus,
     handleSessionExpired,
+    clientRef,
+    selectedEleveIdRef,
+    setBusy,
+    setPrintDays,
+    setDisplayName,
+    setIsLoggedIn,
   ]);
 
   useEffect(() => {
     runRef.current = run;
   }, [run]);
-
-  const printHomework = useCallback(() => {
-    window.print();
-  }, []);
-
-  const afterPrint = useCallback(() => {
-    logStatus('Impression terminée.');
-  }, [logStatus]);
-
-  const disconnect = useCallback(() => {
-    clientRef.current = new EdClient();
-    setIsLoggedIn(false);
-    selectedEleveIdRef.current = null;
-    eleveListRef.current = [];
-    setEleveModal(null);
-    setPrintDays(null);
-    clearSession();
-    setPassword('');
-    setDisplayName('');
-    logStatus('Vous êtes déconnecté.');
-  }, [logStatus]);
 
   return {
     username,
