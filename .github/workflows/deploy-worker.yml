@@ -33,7 +33,7 @@ jobs:
           import { readFileSync, writeFileSync } from 'node:fs';
 
           const source = readFileSync('cloudflare.js', 'utf8');
-          const origins = process.env.ALLOWED_ORIGINS;
+          const origins = process.env.ALLOWED_ORIGINS.replace(/^ALLOWED_ORIGINS=/i, '').trim();
           const marker = '"__ALLOWED_ORIGINS__"';
           if (!origins || !source.includes(marker)) {
             throw new Error('Worker template or ALLOWED_ORIGINS is missing');

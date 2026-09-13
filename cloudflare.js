@@ -5,10 +5,18 @@ const TWO_FA_LIMIT = { limit: 5, windowMs: 10 * 60_000 };
 const memoryBuckets = new Map();
 const DEPLOYED_ALLOWED_ORIGINS = "__ALLOWED_ORIGINS__";
 
+function normalizeOrigin(origin) {
+  try {
+    return new URL(origin).origin;
+  } catch {
+    return origin.trim().replace(/\/+$/, "");
+  }
+}
+
 function allowedOrigins() {
   return DEPLOYED_ALLOWED_ORIGINS
     .split(",")
-    .map((origin) => origin.trim())
+    .map(normalizeOrigin)
     .filter(Boolean);
 }
 
@@ -105,7 +113,7 @@ function buildUpstreamHeaders(request) {
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin");
-    const originIsAllowed = origin && allowedOrigins().includes(origin);
+    const originIsAllowed = origin && allowedOrigins().includes(normalizeOrigin(origin));
     if (!originIsAllowed) return jsonResponse({ error: "Origin not allowed" }, 403, origin || "null");
 
     if (request.method === "OPTIONS") {
