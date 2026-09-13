@@ -19,6 +19,8 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    environment:
+      name: cloudflare-production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,7 +35,10 @@ jobs:
         run: npm ci
 
       - name: Validate
+        env:
+          VITE_PROXY_BASE_URL: ${{ secrets.VITE_PROXY_BASE_URL }}
         run: |
+          test -n "$VITE_PROXY_BASE_URL"
           npm test
           npm run lint
           npm run build
@@ -64,7 +69,9 @@ jobs:
         env:
           VITE_BASE_URL: ${{ steps.pages.outputs.base_url }}
           VITE_PROXY_BASE_URL: ${{ secrets.VITE_PROXY_BASE_URL }}
-        run: npm run build
+        run: |
+          test -n "$VITE_PROXY_BASE_URL"
+          npm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

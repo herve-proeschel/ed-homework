@@ -84,7 +84,7 @@ Pour déployer, ouvrez **Actions > Deploy Cloudflare Worker > Run workflow**. Gi
 
 Ajoutez également les secrets d'environnement `ALLOWED_ORIGINS` et `CLOUDFLARE_WORKER_NAME`. Par exemple, `ALLOWED_ORIGINS` peut contenir `https://herve-proeschel.github.io,http://localhost:5173,http://127.0.0.1:5173` et `CLOUDFLARE_WORKER_NAME` peut contenir `ed-cors-proxy`. Le workflow injecte directement ces secrets dans la commande Wrangler; le nom du Worker et les origines autorisées ne sont pas codés dans le dépôt.
 
-Pour le workflow GitHub Pages, ajoutez également le secret `VITE_PROXY_BASE_URL` contenant l'URL publique du Worker. Comme cette valeur est utilisée par le navigateur, Vite l'intègre au JavaScript généré : elle ne doit donc pas contenir un secret réel.
+Pour le workflow GitHub Pages, ajoutez également le secret d'environnement `VITE_PROXY_BASE_URL` contenant l'URL publique du Worker dans `cloudflare-production`. Le job de build GitHub Pages utilise cet environnement pour accéder au secret. Comme cette valeur est utilisée par le navigateur, Vite l'intègre au JavaScript généré : elle ne doit donc pas contenir un secret réel.
 
 Le worker n'autorise que les routes et méthodes utilisées par l'application, limite les corps à 64 KiB et annule les appels amont après 10 secondes. Les tentatives de connexion sont limitées à 5 par minute et par adresse IP, et les réponses 2FA à 5 par 10 minutes. Pour un rate limiting distribué entre les instances Cloudflare, configurer les bindings `LOGIN_RATE_LIMITER` et `TWO_FA_RATE_LIMITER`; sans ces bindings, un limiteur mémoire local fournit un filet de sécurité non distribué.
 
