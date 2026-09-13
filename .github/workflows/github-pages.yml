@@ -40,6 +40,8 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    environment:
+      name: cloudflare-production
     needs: validate
     steps:
       - name: Checkout
