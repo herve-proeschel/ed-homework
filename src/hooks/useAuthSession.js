@@ -15,7 +15,13 @@ export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, se
   const [password, setPassword] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [displayName, setDisplayName] = useState('');
+  const [displayName, setDisplayNameState] = useState('');
+  const displayNameRef = useRef('');
+
+  const setDisplayName = useCallback((name) => {
+    displayNameRef.current = name;
+    setDisplayNameState(name);
+  }, []);
 
   const [qcm, setQcm] = useState(null); // { question, options }
   const qcmResolverRef = useRef(null);
@@ -37,15 +43,15 @@ export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, se
     logStatus('Session restaurée, prêt à imprimer.');
   }, [logStatus, eleveListRef, selectedEleveIdRef, setEleveModal]);
 
-  const persistSession = useCallback((displayNameOverride = displayName) => {
+  const persistSession = useCallback((displayNameOverride) => {
     const clientState = clientRef.current.getState();
     saveSession({
       ...clientState,
       selectedEleveId: selectedEleveIdRef.current,
       eleveList: eleveListRef.current,
-      displayName: displayNameOverride,
+      displayName: displayNameOverride ?? displayNameRef.current,
     });
-  }, [displayName, eleveListRef, selectedEleveIdRef]);
+  }, [eleveListRef, selectedEleveIdRef]);
 
   const askQcm = useCallback((question, options) => {
     return new Promise((resolve, reject) => {
