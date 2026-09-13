@@ -44,16 +44,23 @@ async function parseJsonResponse(response) {
 export class EdClient {
   constructor() {
     this.activeToken = '';
+    this.twoFaToken = '';
     this.savedGtk = '';
     this.rawCookies = '';
   }
 
   getState() {
-    return { activeToken: this.activeToken, savedGtk: this.savedGtk, rawCookies: this.rawCookies };
+    return {
+      activeToken: this.activeToken,
+      twoFaToken: this.twoFaToken,
+      savedGtk: this.savedGtk,
+      rawCookies: this.rawCookies,
+    };
   }
 
-  restoreState({ activeToken, savedGtk, rawCookies }) {
+  restoreState({ activeToken, twoFaToken, savedGtk, rawCookies }) {
     this.activeToken = activeToken || '';
+    this.twoFaToken = twoFaToken || '';
     this.savedGtk = savedGtk || '';
     this.rawCookies = rawCookies || '';
   }
@@ -80,6 +87,9 @@ export class EdClient {
     if (this.rawCookies) {
       headers['x-cookies'] = this.rawCookies;
     }
+    if (cleanEndpoint.includes('/doubleauth.awp') && this.twoFaToken) {
+      headers['2fa-token'] = this.twoFaToken;
+    }
 
     const bodyParam = new URLSearchParams();
     bodyParam.append('data', JSON.stringify(payload));
@@ -93,6 +103,11 @@ export class EdClient {
     const refreshedToken = response.headers.get('x-token') || response.headers.get('X-Token');
     if (refreshedToken) {
       this.activeToken = refreshedToken;
+    }
+
+    const twoFaToken = response.headers.get('2fa-token');
+    if (twoFaToken) {
+      this.twoFaToken = twoFaToken;
     }
 
     const newCookies = response.headers.get('x-all-cookies');
@@ -150,7 +165,14 @@ export class EdClient {
   }
 
   async answerQcm(choice) {
-    return this.apiCall('v3/connexion/doubleauth.awp?verbe=post', 'POST', { choix: choice }, false);
+    const response = await this.apiCall(
+      'v3/connexion/doubleauth.awp?verbe=post',
+      'POST',
+      { choix: choice },
+      false,
+    );
+    this.twoFaToken = '';
+    return response;
   }
 
   async getCahierDeTexte(eleveId) {

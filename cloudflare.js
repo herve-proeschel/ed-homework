@@ -5,7 +5,7 @@ export default {
         headers: {
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, X-Token, Authorization, Cookie, x-gtk, x-cookies",
+          "Access-Control-Allow-Headers": "Content-Type, X-Token, 2fa-token, Authorization, Cookie, x-gtk, x-cookies",
           "Access-Control-Max-Age": "86400",
         },
       });
@@ -48,7 +48,7 @@ export default {
 
       const newResponseHeaders = new Headers(response.headers);
       newResponseHeaders.set("Access-Control-Allow-Origin", "*");
-      newResponseHeaders.set("Access-Control-Expose-Headers", "X-Token, x-token, x-all-cookies, Set-Cookie, x-gtk");
+      newResponseHeaders.set("Access-Control-Expose-Headers", "X-Token, x-token, 2fa-token, x-all-cookies, Set-Cookie, x-gtk");
 
       // Capture tous les Set-Cookie
       let cookieArray = [];
