@@ -1,2 +1,12 @@
 main = "cloudflare.js"
 compatibility_date = "2026-09-13"
+
+[[ratelimits]]
+name = "LOGIN_RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 5, period = 60 }
+
+[[ratelimits]]
+name = "TWO_FA_RATE_LIMITER"
+namespace_id = "1002"
+simple = { limit = 5, period = 600 }

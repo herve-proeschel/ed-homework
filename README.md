@@ -88,6 +88,22 @@ Pour le workflow GitHub Pages, ajoutez également le secret `VITE_PROXY_BASE_URL
 
 Le worker n'autorise que les routes et méthodes utilisées par l'application, limite les corps à 64 KiB et annule les appels amont après 10 secondes. Les tentatives de connexion sont limitées à 5 par minute et par adresse IP, et les réponses 2FA à 5 par 10 minutes. Pour un rate limiting distribué entre les instances Cloudflare, configurer les bindings `LOGIN_RATE_LIMITER` et `TWO_FA_RATE_LIMITER`; sans ces bindings, un limiteur mémoire local fournit un filet de sécurité non distribué.
 
+Dans `wrangler.toml`, déclarez les deux bindings avec des `namespace_id` distincts :
+
+```toml
+[[ratelimits]]
+name = "LOGIN_RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 5, period = 60 }
+
+[[ratelimits]]
+name = "TWO_FA_RATE_LIMITER"
+namespace_id = "1002"
+simple = { limit = 5, period = 600 }
+```
+
+Le premier binding limite les connexions à 5 tentatives par minute et par adresse IP. Le second limite les validations 2FA à 5 tentatives par 10 minutes et par adresse IP. Déployez ensuite le Worker avec `npx wrangler deploy`.
+
 ## Stockage et sécurité
 
 * `sessionStorage.ed_session` contient le token actif, le token 2FA, GTK, les cookies réduits, l'élève sélectionné, la liste des élèves et le nom affiché.
