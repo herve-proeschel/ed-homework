@@ -73,13 +73,17 @@ export function useHomeworkPrinter() {
           saveFa(fa);
         }
 
+        logStatus('Réinitialisation de la session (GTK)...');
+        await clientRef.current.initGtk();
+
+        logStatus('Reprise de l’authentification...');
         const finalLogin = await clientRef.current.login(username, password, fa);
         qcmResolverRef.current?.resolve(finalLogin.data);
       } catch (err) {
         qcmResolverRef.current?.reject(err);
       }
     },
-    [username, password],
+    [username, password, logStatus],
   );
 
   const askEleve = useCallback((eleves) => {

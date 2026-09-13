@@ -124,6 +124,11 @@ export class EdClient {
   }
 
   async initGtk() {
+    this.activeToken = '';
+    this.twoFaToken = '';
+    this.savedGtk = '';
+    this.rawCookies = '';
+
     const gtkUrl = `${PROXY_BASE_URL}/v3/login.awp?gtk=1&v=${ED_VERSION}`;
     const gtkRes = await fetch(gtkUrl, {
       method: 'GET',
