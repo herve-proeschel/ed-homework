@@ -1,7 +1,27 @@
 :root {
   --primary: #0b4e84;
   --primary-hover: #083b64;
+  --primary-contrast: #ffffff;
   --bg: #f8fafc;
   --card: #ffffff;
   --border: #cbd5e1;
+  --text: #1e293b;
+  --muted-text: #475569;
+  --input-bg: #ffffff;
+  --subtle-bg: #f1f5f9;
+  --shadow: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme='dark'] {
+  --primary: #63b3ed;
+  --primary-hover: #90cdf4;
+  --primary-contrast: #111827;
+  --bg: #111827;
+  --card: #1f2937;
+  --border: #4b5563;
+  --text: #f3f4f6;
+  --muted-text: #cbd5e1;
+  --input-bg: #111827;
+  --subtle-bg: #374151;
+  --shadow: rgba(0, 0, 0, 0.3);
 }

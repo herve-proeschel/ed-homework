@@ -4,6 +4,7 @@ import StatusMessage from './components/StatusMessage';
 import QcmModal from './components/QcmModal';
 import EleveModal from './components/EleveModal';
 import HomeWorkView from './components/HomeWorkView';
+import ThemeMenu from './components/ThemeMenu';
 import { useHomeworkPrinter } from './hooks/useHomeworkPrinter';
 
 function App() {
@@ -43,7 +44,10 @@ function App() {
   return (
     <>
       <div className="container" id="appContainer">
-        <h1>Cahier de Texte</h1>
+        <div className="app-header">
+          <h1>Cahier de Texte</h1>
+          <ThemeMenu />
+        </div>
 
         {!isLoggedIn && (
           <>

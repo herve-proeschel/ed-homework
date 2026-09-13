@@ -2,6 +2,7 @@
 @import './styles/layout.css';
 @import './styles/forms.css';
 @import './styles/header-bar.css';
+@import './styles/theme.css';
 @import './styles/status.css';
 @import './styles/modals.css';
 @import './styles/print-view.css';

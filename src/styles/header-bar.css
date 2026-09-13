@@ -7,11 +7,11 @@
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  color: #475569;
+  color: var(--muted-text);
 }
 
 .logged-in-bar strong {
-  color: #1e293b;
+  color: var(--text);
 }
 
 .logout-btn {

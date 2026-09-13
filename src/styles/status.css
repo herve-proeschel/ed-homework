@@ -14,3 +14,13 @@
   background: #fee2e2;
   color: #b91c1c;
 }
+
+[data-theme='dark'] .status-info {
+  background: #164e63;
+  color: #bae6fd;
+}
+
+[data-theme='dark'] .status-error {
+  background: #591b1b;
+  color: #fecaca;
+}

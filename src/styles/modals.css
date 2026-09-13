@@ -1,5 +1,5 @@
 .qcm-modal {
-  background: #fff;
+  background: var(--card);
   border: 2px solid var(--primary);
   padding: 16px;
   border-radius: 8px;
@@ -11,7 +11,7 @@
   width: 100%;
   padding: 10px;
   margin: 6px 0;
-  background: #f1f5f9;
+  background: var(--subtle-bg);
   border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 0.95rem;
@@ -29,6 +29,8 @@
   box-sizing: border-box;
   padding: 12px;
   border: 1px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text);
   border-radius: 6px;
   font-size: 1rem;
   margin-bottom: 10px;
