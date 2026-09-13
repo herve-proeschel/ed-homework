@@ -98,7 +98,7 @@ Le Worker de `cloudflare.js` est un relais HTTP generique :
 
 Les cookies `Set-Cookie` retournes par EcoleDirecte sont reduits aux paires nom-valeur puis renvoyes dans `x-all-cookies`, afin que `EdClient` puisse les conserver hors du mecanisme de cookies du navigateur.
 
-Le Worker limite le CORS aux origines de `ALLOWED_ORIGINS`, aux methodes et routes utilisees par l'application, et aux parametres de query attendus. `ALLOWED_ORIGINS` est injectee par le workflow depuis le secret de l'environnement GitHub `cloudflare-production`; aucune valeur par defaut n'est acceptee. Les corps sont limites a 64 KiB et l'appel vers l'amont a 10 secondes.
+Le Worker limite le CORS aux origines de `ALLOWED_ORIGINS`, aux methodes et routes utilisees par l'application, et aux parametres de query attendus. Le workflow injecte `ALLOWED_ORIGINS` dans une copie temporaire de `cloudflare.js` avant publication; aucune valeur par defaut n'est acceptee et cette copie n'est pas versionnee. Les corps sont limites a 64 KiB et l'appel vers l'amont a 10 secondes.
 
 ## 5. Stockage et securite
 
@@ -136,10 +136,13 @@ Le fichier `vite.config.js` gere la base de deploiement et genere le service wor
 Le workflow `.github/workflows/deploy-worker.yml` est manuel et exécute Wrangler 4 dans une étape shell avec la commande :
 
 ```text
-npx --yes wrangler@4 deploy --name "$CLOUDFLARE_WORKER_NAME" --var "ALLOWED_ORIGINS:$ALLOWED_ORIGINS"
+node --input-type=module <<'NODE'
+// Generation temporaire avec la valeur du secret injectee avant publication.
+NODE
+npx --yes wrangler@4 deploy cloudflare.deploy.js --name "$CLOUDFLARE_WORKER_NAME"
 ```
 
-La configuration `wrangler.toml` definit le fichier d'entree et la `compatibility_date` requise par Wrangler. Les variables shell sont alimentees par les secrets de l'environnement GitHub et expandues par le shell avant l'appel a Wrangler.
+La configuration `wrangler.toml` definit la `compatibility_date` requise par Wrangler. Le fichier source reste sans secret; le workflow publie uniquement la copie temporaire contenant les origines autorisees.
 
 Il attend les secrets d'environnement GitHub `cloudflare-production` : `CLOUDFLARE_API_TOKEN` et `CLOUDFLARE_ACCOUNT_ID`. Le token Cloudflare ne doit jamais etre place dans le depot ni dans le bundle frontend.
 

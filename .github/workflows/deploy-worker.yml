@@ -26,4 +26,18 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_WORKER_NAME: ${{ secrets['CLOUDFLARE_WORKER_NAME'] }}
           ALLOWED_ORIGINS: ${{ secrets['ALLOWED_ORIGINS'] }}
-        run: npx --yes wrangler@4 deploy --name "$CLOUDFLARE_WORKER_NAME" --var "ALLOWED_ORIGINS:$ALLOWED_ORIGINS"
+        run: |
+          test -n "$CLOUDFLARE_WORKER_NAME"
+          test -n "$ALLOWED_ORIGINS"
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+
+          const source = readFileSync('cloudflare.js', 'utf8');
+          const origins = process.env.ALLOWED_ORIGINS;
+          const marker = '"__ALLOWED_ORIGINS__"';
+          if (!origins || !source.includes(marker)) {
+            throw new Error('Worker template or ALLOWED_ORIGINS is missing');
+          }
+          writeFileSync('cloudflare.deploy.js', source.replace(marker, JSON.stringify(origins)));
+          NODE
+          npx --yes wrangler@4 deploy cloudflare.deploy.js --name "$CLOUDFLARE_WORKER_NAME"

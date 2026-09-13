@@ -3,9 +3,10 @@ const UPSTREAM_TIMEOUT_MS = 10_000;
 const LOGIN_LIMIT = { limit: 5, windowMs: 60_000 };
 const TWO_FA_LIMIT = { limit: 5, windowMs: 10 * 60_000 };
 const memoryBuckets = new Map();
+const DEPLOYED_ALLOWED_ORIGINS = "__ALLOWED_ORIGINS__";
 
-function allowedOrigins(env) {
-  return (env.ALLOWED_ORIGINS || "")
+function allowedOrigins() {
+  return DEPLOYED_ALLOWED_ORIGINS
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
@@ -104,7 +105,7 @@ function buildUpstreamHeaders(request) {
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin");
-    const originIsAllowed = origin && allowedOrigins(env).includes(origin);
+    const originIsAllowed = origin && allowedOrigins().includes(origin);
     if (!originIsAllowed) return jsonResponse({ error: "Origin not allowed" }, 403, origin || "null");
 
     if (request.method === "OPTIONS") {
