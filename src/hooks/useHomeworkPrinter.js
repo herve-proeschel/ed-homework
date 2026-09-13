@@ -15,6 +15,7 @@ import {
   getSavedFa,
   saveFa,
 } from '../services/sessionStorage';
+import { formatDay } from '../utils/formatDay';
 
 export function useHomeworkPrinter() {
   const clientRef = useRef(new EdClient());
@@ -195,15 +196,6 @@ export function useHomeworkPrinter() {
     });
     return contentHtml;
   }
-
-  const formatDay = (dateStr) => {
-    const parts = dateStr.split('-');
-    if (parts.length !== 3) return dateStr;
-    const d = new Date(parts[0], parts[1] - 1, parts[2]);
-    return d
-      .toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-      .toUpperCase();
-  };
 
   const handleSessionExpired = useCallback(
     (msg = 'Votre session a expiré après une période d’inactivité. Veuillez saisir votre mot de passe pour vous reconnecter.') => {

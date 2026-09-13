@@ -3,7 +3,7 @@ import './App.css';
 import StatusMessage from './components/StatusMessage';
 import QcmModal from './components/QcmModal';
 import EleveModal from './components/EleveModal';
-import PrintView from './components/PrintView';
+import HomeWorkView from './components/HomeWorkView';
 import { useHomeworkPrinter } from './hooks/useHomeworkPrinter';
 
 function App() {
@@ -23,7 +23,6 @@ function App() {
     selectEleveOption,
     confirmEleve,
     printDays,
-    buildPrintHtml,
     run,
     printHomework,
     afterPrint,
@@ -99,7 +98,7 @@ function App() {
         <StatusMessage message={status} isError={statusIsError} />
       </div>
 
-      <PrintView days={printDays} buildPrintHtml={buildPrintHtml} />
+      <HomeWorkView days={printDays} />
     </>
   );
 }
