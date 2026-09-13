@@ -113,6 +113,12 @@ Le premier binding limite les connexions à 5 tentatives par minute et par adres
 
 Le Worker ne contient pas de base de données et ne persiste pas la session. La déconnexion et l'expiration de session suppriment les données de session locales. Les appels API et les réponses privées ne sont pas mis en cache par le service worker.
 
+## Confidentialité des données (Data privacy)
+
+Aucune donnée de l'utilisateur n'est stockée en dehors du client web. Les identifiants, tokens, cookies de session, profils élèves et devoirs sont conservés uniquement dans la mémoire de la page ou dans le `sessionStorage` et le `localStorage` du navigateur, selon le besoin décrit ci-dessus.
+
+Le relais Cloudflare ne fait que transmettre les requêtes entre le navigateur et ÉcoleDirecte : il ne possède pas de base de données et ne persiste aucune donnée utilisateur. Les données privées ne sont pas mises en cache par l'application. Elles transitent néanmoins par ce relais et par les services d'ÉcoleDirecte nécessaires à l'authentification et à la récupération des devoirs.
+
 ## Limites connues
 
 Le worker ne journalise aucun mot de passe, token, cookie ni corps de requête. Les erreurs renvoyées au navigateur sont génériques afin de ne pas divulguer le détail de l'amont.
