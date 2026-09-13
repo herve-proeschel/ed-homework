@@ -11,8 +11,10 @@
   color: #1e293b;
   min-height: 100vh;
   padding: 16px;
+  box-sizing: border-box;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
 }
 
 .container {
@@ -224,6 +226,25 @@
     line-height: 1.4;
     background: #fff;
   }
+}
+
+#printView {
+  width: 100%;
+  max-width: 480px;
+  box-sizing: border-box;
+  margin-top: 16px;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+#printView img,
+#printView table {
+  max-width: 100%;
+  height: auto;
+}
+
+#printView table {
+  table-layout: fixed;
 }
 
 #printView .day-container {
