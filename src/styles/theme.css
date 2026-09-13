@@ -33,12 +33,21 @@
   position: absolute;
   top: 38px;
   right: 0;
-  min-width: 140px;
+  min-width: 260px;
   padding: 4px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--card);
   box-shadow: 0 8px 24px var(--shadow);
+}
+
+.theme-menu-section-title {
+  margin: 6px 10px 4px;
+  color: var(--muted-text);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .theme-option {
@@ -60,4 +69,37 @@
 .theme-option:focus-visible {
   background: var(--subtle-bg);
   outline: none;
+}
+
+.theme-menu-divider {
+  height: 1px;
+  margin: 6px 4px;
+  background: var(--border);
+}
+
+.theme-menu-about {
+  padding: 0 10px 8px;
+}
+
+.theme-menu-about .theme-menu-section-title {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.theme-menu-about p {
+  margin: 0 0 8px;
+  color: var(--muted-text);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.theme-menu-about a {
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.theme-menu-about a:hover,
+.theme-menu-about a:focus-visible {
+  color: var(--primary-hover);
 }

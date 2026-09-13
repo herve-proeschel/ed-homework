@@ -75,6 +75,7 @@ export default function ThemeMenu() {
       </button>
       {isOpen && (
         <div className="theme-menu-popover" role="menu" aria-label="Thème de l'application">
+          <p className="theme-menu-section-title">Thème</p>
           {THEME_OPTIONS.map((option) => (
             <button
               type="button"
@@ -88,6 +89,19 @@ export default function ThemeMenu() {
               {theme === option.value && <span aria-hidden="true">✓</span>}
             </button>
           ))}
+          <div className="theme-menu-divider" />
+          <section className="theme-menu-about" aria-labelledby="theme-menu-about-title">
+            <h2 className="theme-menu-section-title" id="theme-menu-about-title">À propos</h2>
+            <p>Cahier de Texte permet de consulter et d'imprimer les devoirs à venir depuis ÉcoleDirecte.</p>
+            <a
+              href="https://github.com/herve-proeschel/ed-homework"
+              target="_blank"
+              rel="noreferrer"
+              role="menuitem"
+            >
+              Voir le projet sur GitHub
+            </a>
+          </section>
         </div>
       )}
     </div>
