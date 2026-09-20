@@ -1,5 +1,5 @@
 const PROXY_BASE_URL = import.meta.env.VITE_PROXY_BASE_URL;
-const ED_VERSION = '4.101.4';
+const ED_VERSION = '4.102.0';
 
 export function decodeBase64Utf8(str) {
   if (!str) return '';
