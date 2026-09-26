@@ -66,7 +66,7 @@ export function useHomeworkPrinter() {
         const accountDisplayName = getAccountFullName(accountData);
         setDisplayName(accountDisplayName);
         setIsLoggedIn(true);
-        logStatus("Sélection de l'élève...");
+        logStatus("Téléchargez les devoirs.");
         eleveId = await chooseEleve(accountData);
 
         if (!eleveId) throw new Error('Profil élève introuvable sur ce compte.');

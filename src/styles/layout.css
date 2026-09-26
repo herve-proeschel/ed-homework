@@ -30,5 +30,22 @@
 }
 
 .app-header {
+  display: grid;
+  grid-template-columns: 36px 1fr 36px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.app-header h1 {
+  grid-column: 2;
+  margin: 0;
+}
+
+.app-header .theme-menu {
   position: relative;
+  top: auto;
+  right: auto;
+  grid-column: 3;
+  justify-self: end;
 }

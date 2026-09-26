@@ -7,6 +7,61 @@
   text-align: left;
 }
 
+.disconnect-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgb(15 23 42 / 45%);
+}
+
+.disconnect-modal {
+  width: min(100%, 380px);
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 12px 32px rgb(15 23 42 / 25%);
+}
+
+.disconnect-modal h2 {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+}
+
+.disconnect-modal p {
+  margin: 0;
+  color: var(--muted-text);
+}
+
+.disconnect-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.disconnect-modal-actions .main-btn,
+.secondary-btn {
+  width: auto;
+  min-width: 88px;
+  margin-top: 0;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+}
+
+.secondary-btn {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--subtle-bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
 .qcm-option {
   width: 100%;
   padding: 10px;

@@ -6,6 +6,8 @@ import EleveModal from './components/EleveModal';
 import HomeWorkView from './components/HomeWorkView';
 import HomeworkActions from './components/HomeworkActions';
 import ThemeMenu from './components/ThemeMenu';
+import LoginForm from './components/LoginForm';
+import LoggedUser from './components/LoggedUser';
 import { useHomeworkPrinter } from './hooks/useHomeworkPrinter';
 
 function App() {
@@ -47,49 +49,20 @@ function App() {
     <>
       <div className="container" id="appContainer">
         <div className="app-header">
+          {isLoggedIn && <LoggedUser displayName={displayName} username={username} onDisconnect={disconnect} />}
           <h1>Cahier de Texte</h1>
           <ThemeMenu />
         </div>
 
         {!isLoggedIn && (
-          <>
-            <div className="form-group">
-              <label htmlFor="username">Identifiant ÉcoleDirecte</label>
-              <input
-                type="text"
-                id="username"
-                autoComplete="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="password">Mot de passe</label>
-              <input
-                type="password"
-                id="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-
-            <button type="button" className="main-btn" onClick={run} disabled={busy}>
-              Connectez vous
-            </button>
-          </>
-        )}
-
-        {isLoggedIn && (
-          <div className="logged-in-bar">
-            <span>
-              Connecté en tant que <strong>{displayName || username}</strong>
-            </span>
-            <button type="button" className="logout-btn" onClick={disconnect} title="Se déconnecter" aria-label="Se déconnecter">
-              ⎋
-            </button>
-          </div>
+          <LoginForm
+            username={username}
+            setUsername={setUsername}
+            password={password}
+            setPassword={setPassword}
+            onSubmit={run}
+            busy={busy}
+          />
         )}
 
         <QcmModal qcm={qcm} onAnswer={answerQcm} />
