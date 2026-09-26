@@ -8,13 +8,24 @@ import { useAuthSession } from './useAuthSession';
 
 export function useHomeworkPrinter() {
   const runRef = useRef(null);
+  const downloadedDaysByEleveRef = useRef({});
 
   const { status, statusIsError, logStatus } = useStatusMessage();
 
   const { printDays, setPrintDays, buildPrintHtml, printHomework, afterPrint } = usePrintHomework({ logStatus });
 
-  const { eleveModal, setEleveModal, eleveListRef, selectedEleveIdRef, selectEleveOption, confirmEleve, chooseEleve } =
+  const { eleveModal, setEleveModal, eleveListRef, selectedEleveIdRef, selectEleveOption, reopenEleve, confirmEleve, chooseEleve } =
     useEleveSelection({ runRef });
+
+  const selectEleve = useCallback(
+    (id) => {
+      selectEleveOption(id);
+      const cachedDays = downloadedDaysByEleveRef.current[id] || null;
+      setPrintDays(cachedDays);
+      logStatus(cachedDays?.length ? 'Devoirs récupérés, prêts à imprimer.' : '');
+    },
+    [selectEleveOption, setPrintDays, logStatus],
+  );
 
   const {
     clientRef,
@@ -132,6 +143,7 @@ export function useHomeworkPrinter() {
 
       persistSession();
       logStatus('Devoirs récupérés, prêts à imprimer.');
+      downloadedDaysByEleveRef.current[eleveId] = detailedDays;
       setPrintDays(detailedDays);
       setBusy(false);
     } catch (err) {
@@ -177,7 +189,8 @@ export function useHomeworkPrinter() {
     qcm,
     answerQcm,
     eleveModal,
-    selectEleveOption,
+    selectEleve,
+    reopenEleve,
     confirmEleve,
     printDays,
     buildPrintHtml,

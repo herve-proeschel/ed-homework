@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { getEleveAccounts } from '../services/edClient';
 
 export function useEleveSelection({ runRef }) {
-  const [eleveModal, setEleveModal] = useState(null); // { eleves, selectedId }
+  const [eleveModal, setEleveModal] = useState(null); // { eleves, selectedId, confirmed }
   const eleveResolverRef = useRef(null);
   const eleveListRef = useRef([]);
   const selectedEleveIdRef = useRef(null);
@@ -10,12 +10,16 @@ export function useEleveSelection({ runRef }) {
   const askEleve = useCallback((eleves) => {
     return new Promise((resolve) => {
       eleveResolverRef.current = resolve;
-      setEleveModal({ eleves, selectedId: String(eleves[0]?.id ?? '') });
+      setEleveModal({ eleves, selectedId: String(eleves[0]?.id ?? ''), confirmed: false });
     });
   }, []);
 
   const selectEleveOption = useCallback((id) => {
     setEleveModal((prev) => (prev ? { ...prev, selectedId: id } : prev));
+  }, []);
+
+  const reopenEleve = useCallback(() => {
+    setEleveModal((prev) => (prev ? { ...prev, confirmed: !prev.confirmed } : prev));
   }, []);
 
   const confirmEleve = useCallback(() => {
@@ -28,6 +32,7 @@ export function useEleveSelection({ runRef }) {
           runRef.current?.();
         }
         eleveResolverRef.current = null;
+        return { ...prev, confirmed: true };
       }
       return prev;
     });
@@ -55,6 +60,7 @@ export function useEleveSelection({ runRef }) {
     eleveListRef,
     selectedEleveIdRef,
     selectEleveOption,
+    reopenEleve,
     confirmEleve,
     chooseEleve,
   };

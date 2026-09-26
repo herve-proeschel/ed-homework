@@ -50,6 +50,32 @@
   width: auto;
 }
 
+.action-row--compact {
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.action-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  flex: 0 0 42px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.action-icon-btn:hover {
+  background: var(--primary-hover);
+}
+
 .print-btn {
   display: inline-flex;
   align-items: center;
@@ -69,4 +95,11 @@
 
 .print-btn:hover {
   background: var(--primary-hover);
+}
+
+.action-row--compact .print-btn {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+  margin-top: 0;
 }

@@ -24,6 +24,34 @@
   text-align: left;
 }
 
+.eleve-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.eleve-modal-header p {
+  margin: 0;
+}
+
+.eleve-modal--collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.eleve-reopen-btn {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--subtle-bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
 .eleve-modal select {
   width: 100%;
   box-sizing: border-box;
@@ -33,6 +61,7 @@
   color: var(--text);
   border-radius: 6px;
   font-size: 1rem;
+  margin-top: 8px;
   margin-bottom: 10px;
 }
 

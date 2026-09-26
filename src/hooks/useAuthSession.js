@@ -36,11 +36,12 @@ export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, se
       setEleveModal({
         eleves: eleveListRef.current,
         selectedId: String(saved.selectedEleveId ?? eleveListRef.current[0].id),
+        confirmed: true,
       });
     }
     setDisplayName(saved.displayName || '');
     setIsLoggedIn(true);
-    logStatus('Session restaurée, prêt à imprimer.');
+    logStatus('Session restaurée, téléchargez les devoirs.');
   }, [logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setDisplayName]);
 
   const persistSession = useCallback((displayNameOverride) => {

@@ -22,7 +22,8 @@ function App() {
     qcm,
     answerQcm,
     eleveModal,
-    selectEleveOption,
+    selectEleve,
+    reopenEleve,
     confirmEleve,
     printDays,
     run,
@@ -92,18 +93,22 @@ function App() {
         )}
 
         <QcmModal qcm={qcm} onAnswer={answerQcm} />
-        <EleveModal
-          eleveModal={eleveModal}
-          onSelect={selectEleveOption}
-          onConfirm={confirmEleve}
-          onPrint={printHomework}
-          canPrint={!!printDays}
-        />
-        {isLoggedIn && !eleveModal && (
-          <HomeworkActions onRetrieve={run} onPrint={printHomework} canPrint={!!printDays} />
-        )}
+        <div className={`student-status-toolbar${eleveModal?.confirmed ? ' student-status-toolbar--closed' : ''}`}>
+          <EleveModal eleveModal={eleveModal} onSelect={selectEleve} onReopen={reopenEleve} />
+          {isLoggedIn && (
+            <div className="action-status-row">
+              <StatusMessage message={status} isError={statusIsError} />
+              <HomeworkActions
+                onRetrieve={eleveModal && !eleveModal.confirmed ? confirmEleve : run}
+                onPrint={printHomework}
+                canPrint={Boolean(printDays?.length)}
+                compact
+              />
+            </div>
+          )}
+        </div>
 
-        <StatusMessage message={status} isError={statusIsError} />
+        {!isLoggedIn && <StatusMessage message={status} isError={statusIsError} />}
       </div>
 
       <HomeWorkView days={printDays} />
