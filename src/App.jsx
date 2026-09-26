@@ -81,7 +81,7 @@ function App() {
           )}
         </div>
 
-        {!isLoggedIn && <StatusMessage message={status} isError={statusIsError} />}
+        {!isLoggedIn && <StatusMessage message={status || 'Pas connecté. Connexion requise.'} isError={statusIsError} />}
       </div>
 
       <HomeWorkView days={printDays} />

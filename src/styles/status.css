@@ -8,6 +8,10 @@
   font-size: 0.9rem;
 }
 
+.container > .status {
+  margin-top: 16px;
+}
+
 .action-status-row {
   display: flex;
   align-items: stretch;
