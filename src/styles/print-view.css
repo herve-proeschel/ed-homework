@@ -97,6 +97,18 @@
   font-size: 0.95rem;
 }
 
+#printView .subject-section-title {
+  margin: 14px 0 4px;
+  font-size: 0.9rem;
+  color: #0b4e84;
+}
+
+#printView .subject-section-separator {
+  margin: 14px 0 0;
+  border: 0;
+  border-top: 1px solid #d5d5d5;
+}
+
 @media print {
   #printView .day-title {
     background-color: #eee !important;

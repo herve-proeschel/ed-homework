@@ -15,15 +15,24 @@ export function usePrintHomework({ logStatus }) {
         if (!aFaire && (!m.contenuDeSeance || !m.contenuDeSeance.contenu)) return;
         hwCount++;
         const detailsHtml = decodeBase64Utf8(aFaire ? aFaire.contenu : '');
+        const sessionHtml = decodeBase64Utf8(m.contenuDeSeance?.contenu || '');
         const dateDonne = aFaire && aFaire.donneLe ? `(Donné le ${formatDay(aFaire.donneLe)})` : '';
         const isEval = aFaire && aFaire.interrogation ? '<span class="badge-eval">Contrôle</span>' : '';
+        const homeworkHtml = aFaire
+          ? `<h3 class="subject-section-title">À faire</h3><div class="subject-content">${detailsHtml || '<em>Sans consigne écrite</em>'}</div>`
+          : '';
+        const sessionContentHtml = sessionHtml
+          ? '<hr class="subject-section-separator"><h3 class="subject-section-title">Contenu de séance</h3>' +
+            `<div class="subject-content">${sessionHtml}</div>`
+          : '';
         contentHtml += `
           <div class="subject-box">
             <div class="subject-header">
               <span class="subject-title">${m.matiere || 'Matière'}</span>
               <span class="subject-meta">${dateDonne} ${isEval}</span>
             </div>
-            <div class="subject-content">${detailsHtml || '<em>Sans consigne écrite</em>'}</div>
+            ${homeworkHtml}
+            ${sessionContentHtml}
           </div>`;
       });
       if (hwCount === 0) {
