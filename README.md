@@ -68,7 +68,7 @@ npm run build
 npm run preview
 ```
 
-Le build accepte `VITE_BASE_URL` pour définir le chemin de base d'un déploiement statique. Sans cette variable, la base est `/`. Il nécessite aussi `VITE_PROXY_BASE_URL`, disponible dans `.env.example` pour le développement local. Le build génère aussi `dist/sw.js`, qui précache les fichiers statiques présents dans `dist`.
+Le build accepte `VITE_BASE_URL` pour définir le chemin de base d'un déploiement statique. Sans cette variable, la base est `/`. Il nécessite aussi `VITE_PROXY_BASE_URL`, disponible dans `.env.example` pour le développement local. Le plugin `vite-plugin-pwa` génère `dist/sw.js` et `dist/manifest.webmanifest`, précache les fichiers statiques présents dans `dist` et traite les requêtes GET/POST vers le proxy en `NetworkOnly` : aucune donnée de session ou réponse ÉcoleDirecte n'est mise en cache.
 
 ### Déployer le proxy Cloudflare
 
