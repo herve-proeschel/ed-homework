@@ -32,7 +32,7 @@ flowchart LR
 | `localStorage` | Conserver l'identifiant saisi et la validation FA retournee par le parcours 2FA. |
 | Cloudflare Worker | Ajouter les en-tetes attendus par EcoleDirecte, transmettre le corps et exposer les en-tetes de session au navigateur. |
 | EcoleDirecte | Authentifier l'utilisateur et fournir les comptes, le cahier de texte et ses details. |
-| Service worker | Mettre en cache le shell et les assets de la SPA en production; les requetes API restent reseau. |
+| Service worker | Precacher le shell et les assets de la SPA en production; traiter les requetes GET/POST du proxy en `NetworkOnly`, sans cache de session. |
 
 Le Worker ne contient pas de base de donnees et ne persiste pas la session. Les tokens, cookies et identifiants sont geres par le navigateur et transmis au Worker pendant les appels.
 
@@ -109,7 +109,7 @@ Le Worker limite le CORS aux origines de `ALLOWED_ORIGINS`, aux methodes et rout
 * `localStorage.ed_fa` contient la reponse FA memorisee par le parcours MFA.
 * Le mot de passe est conserve uniquement dans l'etat React pendant la session de la page; il n'est pas ecrit dans le stockage local.
 
-La deconnexion et l'expiration de session recreent `EdClient`, effacent la session et retirent les donnees d'authentification de `sessionStorage`. Le service worker ne met pas en cache les appels API ni les reponses privees.
+La deconnexion et l'expiration de session recreent `EdClient`, effacent la session et retirent les donnees d'authentification de `sessionStorage`. Le service worker precache uniquement le shell et les assets statiques. Les appels GET/POST vers l'origine `VITE_PROXY_BASE_URL` utilisent la strategie Workbox `NetworkOnly`; les tokens, cookies et reponses privees ne sont donc jamais mis en cache.
 
 ### Limites et configuration de production
 
@@ -129,7 +129,7 @@ npm test
 npm run build
 ```
 
-Le fichier `vite.config.js` gere la base de deploiement et genere le service worker `dist/sw.js` pendant le build. Aucun proxy Vite vers EcoleDirecte n'est configure dans la version actuelle : le frontend utilise le Worker configure en dur dans `src/services/edClient.js`, en developpement comme en production.
+Le fichier `vite.config.js` gere la base de deploiement et utilise `vite-plugin-pwa` pour generer le service worker `dist/sw.js` et le manifeste `dist/manifest.webmanifest` pendant le build. Aucun proxy Vite vers EcoleDirecte n'est configure dans la version actuelle : le frontend utilise le Worker configure en dur dans `src/services/edClient.js`, en developpement comme en production.
 
 ### Worker
 
@@ -150,7 +150,7 @@ Il attend les secrets d'environnement GitHub `cloudflare-production` : `CLOUDFLA
 
 - [ ] `npm run lint` passe.
 - [ ] `npm test` passe.
-- [ ] `npm run build` genere le bundle et `dist/sw.js`.
+- [ ] `npm run build` genere le bundle, `dist/sw.js` et `dist/manifest.webmanifest`.
 - [ ] Le Worker repond au preflight et expose les headers necessaires.
 - [ ] Login standard, MFA, selection d'un eleve et recuperation des devoirs fonctionnent avec un compte de test.
 - [ ] L'expiration de session efface bien le stockage de session.
