@@ -1,0 +1,51 @@
+{
+  "packageId": "eu.proeschel.ed.homework",
+  "host": "devoirs.ed.proeschel.eu",
+  "name": "Cahier de Texte - ÉcoleDirecte",
+  "launcherName": "Cahier de Texte",
+  "display": "standalone",
+  "themeColor": "#0B4E84",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#F8FAFC",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://devoirs.ed.proeschel.eu/pwa-512x512.png",
+  "maskableIconUrl": "https://devoirs.ed.proeschel.eu/maskable-icon-512x512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "C:\\Users\\herve\\workspace\\ed-homework\\android\\android.keystore",
+    "alias": "android"
+  },
+  "appVersionName": "1",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "unknown",
+  "webManifestUrl": "https://devoirs.ed.proeschel.eu/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://devoirs.ed.proeschel.eu/",
+  "minSdkVersion": 21,
+  "orientation": "any",
+  "fingerprints": [
+    {
+      "value": "B1:2B:D4:F9:44:78:6B:81:53:22:2B:E6:F7:48:34:91:7D:A4:CA:21:E5:44:75:5E:80:6B:36:0C:79:A4:CD:F6"
+    }
+  ],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [],
+  "appVersion": "1"
+}

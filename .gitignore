@@ -142,3 +142,13 @@ cloudflare.deploy.js
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Android / TWA
+*.keystore
+*.jks
+.gradle/
+android/.gradle/
+android/app/build/
+android/build/
+android/captures/
+android/KEYSTORE_INFO.md
