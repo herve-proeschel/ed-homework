@@ -1,3 +1,33 @@
+const updateCallbacks = new Set();
+let pendingRegistration = null;
+
+export function subscribeToServiceWorkerUpdates(callback) {
+  updateCallbacks.add(callback);
+  if (pendingRegistration?.waiting) {
+    callback(true);
+  }
+  return () => {
+    updateCallbacks.delete(callback);
+  };
+}
+
+export function activateServiceWorkerUpdate() {
+  if (pendingRegistration?.waiting) {
+    pendingRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+  }
+}
+
+function notifyUpdateAvailable(registration) {
+  pendingRegistration = registration;
+  updateCallbacks.forEach((cb) => {
+    try {
+      cb(true);
+    } catch {
+      // Ignore callback errors
+    }
+  });
+}
+
 export function registerServiceWorker() {
   if (!import.meta.env.PROD || !('serviceWorker' in navigator)) {
     return;
@@ -7,6 +37,7 @@ export function registerServiceWorker() {
   let isReloading = false;
 
   const requestActivation = (registration) => {
+    notifyUpdateAvailable(registration);
     if (registration.waiting) {
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
     }
