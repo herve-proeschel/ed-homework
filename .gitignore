@@ -153,5 +153,5 @@ android/build/
 android/captures/
 android/KEYSTORE_INFO.md
 android/keystore.properties
-keystore.properties
+*.properties
 

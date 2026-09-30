@@ -150,6 +150,7 @@ android {
 
         
     }
+
     def keystorePropertiesFile = rootProject.file("keystore.properties")
     def keystoreProperties = new Properties()
     if (keystorePropertiesFile.exists()) {
@@ -158,7 +159,7 @@ android {
 
     signingConfigs {
         release {
-            if (keystorePropertiesFile.exists()) {
+            if (keystorePropertiesFile.exists() && keystoreProperties['storeFile']) {
                 storeFile file(keystoreProperties['storeFile'])
                 storePassword keystoreProperties['storePassword']
                 keyAlias keystoreProperties['keyAlias']
@@ -168,13 +169,13 @@ android {
     }
     buildTypes {
         release {
-            if (keystorePropertiesFile.exists()) {
+            if (signingConfigs.release.storeFile != null) {
                 signingConfig signingConfigs.release
             }
             minifyEnabled true
         }
         debug {
-            if (keystorePropertiesFile.exists()) {
+            if (signingConfigs.release.storeFile != null) {
                 signingConfig signingConfigs.release
             }
         }
