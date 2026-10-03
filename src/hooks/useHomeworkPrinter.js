@@ -16,6 +16,9 @@ export function useHomeworkPrinter() {
   const [scheduleBusy, setScheduleBusy] = useState(false);
   const [scheduleWeekCount, setScheduleWeekCount] = useState(0);
   const [scheduleHasMore, setScheduleHasMore] = useState(true);
+  const gradesByEleveRef = useRef({});
+  const [grades, setGrades] = useState(null);
+  const [gradesBusy, setGradesBusy] = useState(false);
 
   const { status, statusIsError, logStatus } = useStatusMessage();
 
@@ -33,10 +36,17 @@ export function useHomeworkPrinter() {
       setScheduleEvents(cachedSchedule);
       setScheduleWeekCount(cachedSchedule.length ? 1 : 0);
       setScheduleHasMore(true);
+      setGrades(gradesByEleveRef.current[id] || null);
       logStatus(cachedDays?.length ? 'Devoirs récupérés, prêts à imprimer.' : '');
     },
     [selectEleveOption, setPrintDays, setScheduleEvents, logStatus],
   );
+
+  const resetScheduleAndGrades = useCallback((events) => {
+    setScheduleEvents(events);
+    setGrades(null);
+    gradesByEleveRef.current = {};
+  }, []);
 
   const {
     clientRef,
@@ -57,7 +67,7 @@ export function useHomeworkPrinter() {
     persistSession,
     handleSessionExpired,
     disconnect,
-  } = useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents });
+  } = useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents: resetScheduleAndGrades });
 
   const dateKey = (date) => date.toISOString().split('T')[0];
   const startOfWeek = (date) => {
@@ -113,10 +123,39 @@ export function useHomeworkPrinter() {
     }
   }, [handleSessionExpired, loadScheduleWeek, logStatus, scheduleBusy, scheduleWeekCount, selectedEleveIdRef]);
 
+  const retrieveGrades = useCallback(async () => {
+    const eleveId = selectedEleveIdRef.current;
+    if (!eleveId || gradesBusy) return;
+    setGradesBusy(true);
+    logStatus('Téléchargement des notes...');
+    try {
+      const response = await clientRef.current.getNotes(eleveId);
+      if (isSessionExpiredError(response)) {
+        handleSessionExpired();
+        return;
+      }
+      if (!response || response.code !== 200 || !response.data) {
+        throw new Error(response?.message || 'Erreur lors de la lecture des notes.');
+      }
+      const data = {
+        periodes: Array.isArray(response.data.periodes) ? response.data.periodes : [],
+        notes: Array.isArray(response.data.notes) ? response.data.notes : [],
+      };
+      gradesByEleveRef.current[eleveId] = data;
+      setGrades(data);
+      logStatus('Notes téléchargées.');
+    } catch (error) {
+      if (isSessionExpiredError({ message: error.message })) handleSessionExpired();
+      else logStatus(`Erreur : ${error.message}`, true);
+    } finally {
+      setGradesBusy(false);
+    }
+  }, [clientRef, gradesBusy, handleSessionExpired, logStatus, selectedEleveIdRef]);
+
   const switchView = useCallback(() => {
     setViewMode((mode) => {
-      const nextMode = mode === 'homework' ? 'schedule' : 'homework';
-      logStatus(nextMode === 'schedule' ? 'Téléchargez l’emploi du temps.' : 'Téléchargez les devoirs.');
+      const nextMode = { homework: 'schedule', schedule: 'grades', grades: 'homework' }[mode];
+      logStatus({ schedule: 'Téléchargez l’emploi du temps.', grades: 'Téléchargez les notes.', homework: 'Téléchargez les devoirs.' }[nextMode]);
       return nextMode;
     });
   }, [logStatus]);
@@ -148,9 +187,9 @@ export function useHomeworkPrinter() {
         persistSession(accountDisplayName);
       }
 
-      if (viewMode === 'schedule') {
+      if (viewMode === 'schedule' || viewMode === 'grades') {
         setBusy(false);
-        await retrieveSchedule();
+        await (viewMode === 'schedule' ? retrieveSchedule() : retrieveGrades());
         return;
       }
 
@@ -251,6 +290,7 @@ export function useHomeworkPrinter() {
     setIsLoggedIn,
     viewMode,
     retrieveSchedule,
+    retrieveGrades,
   ]);
 
   useEffect(() => {
@@ -259,19 +299,21 @@ export function useHomeworkPrinter() {
 
   useEffect(() => {
     const selectedEleveId = selectedEleveIdRef.current;
-    if (!isLoggedIn || !selectedEleveId || busy || scheduleBusy) return undefined;
+    if (!isLoggedIn || !selectedEleveId || busy || scheduleBusy || gradesBusy) return undefined;
     const autoDownloadKey = `${selectedEleveId}:${viewMode}`;
     if (autoDownloadKeyRef.current === autoDownloadKey) return undefined;
     if (viewMode === 'schedule' && scheduleEvents.length) return undefined;
+    if (viewMode === 'grades' && grades) return undefined;
     if (viewMode === 'homework' && printDays) return undefined;
 
     autoDownloadKeyRef.current = autoDownloadKey;
     const timer = window.setTimeout(() => {
       if (viewMode === 'schedule') retrieveSchedule();
+      else if (viewMode === 'grades') retrieveGrades();
       else run();
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [busy, isLoggedIn, printDays, retrieveSchedule, run, scheduleBusy, scheduleEvents.length, selectedEleveIdRef, viewMode]);
+  }, [busy, grades, gradesBusy, isLoggedIn, printDays, retrieveGrades, retrieveSchedule, run, scheduleBusy, scheduleEvents.length, selectedEleveIdRef, viewMode]);
 
   return {
     username,
@@ -293,9 +335,12 @@ export function useHomeworkPrinter() {
     scheduleEvents,
     scheduleBusy,
     hasMoreSchedule: scheduleHasMore,
+    grades,
+    gradesBusy,
     viewMode,
     switchView,
     retrieveSchedule,
+    retrieveGrades,
     buildPrintHtml,
     run,
     printHomework,

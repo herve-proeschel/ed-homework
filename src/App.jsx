@@ -10,6 +10,14 @@ import LoginForm from './components/LoginForm';
 import LoggedUser from './components/LoggedUser';
 import { useHomeworkPrinter } from './hooks/useHomeworkPrinter';
 import ScheduleView from './components/ScheduleView';
+import GradesView from './components/GradesView';
+
+const VIEW_TITLES = { homework: 'Cahier de Texte', schedule: 'Emploi du temps', grades: 'Notes' };
+const VIEW_EMPTY_MESSAGES = {
+  homework: 'Téléchargez les devoirs.',
+  schedule: 'Téléchargez l’emploi du temps.',
+  grades: 'Téléchargez les notes.',
+};
 
 function App() {
   const {
@@ -32,9 +40,12 @@ function App() {
     scheduleEvents,
     scheduleBusy,
     hasMoreSchedule,
+    grades,
+    gradesBusy,
     viewMode,
     switchView,
     retrieveSchedule,
+    retrieveGrades,
     run,
     printHomework,
     afterPrint,
@@ -57,7 +68,7 @@ function App() {
       <div className="container" id="appContainer">
         <div className="app-header">
           {isLoggedIn && <LoggedUser displayName={displayName} username={username} onDisconnect={disconnect} />}
-          <h1><button type="button" className="title-switch" onClick={switchView}>{viewMode === 'homework' ? 'Cahier de Texte' : 'Emploi du temps'}</button></h1>
+          <h1><button type="button" className="title-switch" onClick={switchView}>{VIEW_TITLES[viewMode]}</button></h1>
           <ThemeMenu />
         </div>
 
@@ -80,14 +91,15 @@ function App() {
               <StatusMessage
                 message={status}
                 isError={statusIsError}
-                emptyMessage={viewMode === 'schedule' ? 'Téléchargez l’emploi du temps.' : 'Téléchargez les devoirs.'}
+                emptyMessage={VIEW_EMPTY_MESSAGES[viewMode]}
               />
               <PrintAction
-                onRetrieve={viewMode === 'schedule' ? retrieveSchedule : eleveModal && !eleveModal.confirmed ? confirmEleve : run}
+                onRetrieve={viewMode === 'schedule' ? retrieveSchedule : viewMode === 'grades' ? retrieveGrades : eleveModal && !eleveModal.confirmed ? confirmEleve : run}
                 onPrint={printHomework}
-                canPrint={Boolean(viewMode === 'schedule' ? scheduleEvents.length : printDays?.length)}
+                canPrint={viewMode === 'grades' ? false : Boolean(viewMode === 'schedule' ? scheduleEvents.length : printDays?.length)}
+                hasData={viewMode === 'grades' && Boolean(grades)}
                 mode={viewMode}
-                busy={viewMode === 'schedule' ? scheduleBusy : busy && (!eleveModal || eleveModal.confirmed)}
+                busy={viewMode === 'schedule' ? scheduleBusy : viewMode === 'grades' ? gradesBusy : busy && (!eleveModal || eleveModal.confirmed)}
                 compact
               />
             </div>
@@ -97,7 +109,9 @@ function App() {
         {!isLoggedIn && <StatusMessage message={status || 'Pas connecté. Connexion requise.'} isError={statusIsError} />}
       </div>
 
-      {viewMode === 'schedule' ? <ScheduleView events={scheduleEvents} hasMore={hasMoreSchedule} loading={scheduleBusy} onLoadMore={retrieveSchedule} /> : <HomeWorkView days={printDays} />}
+      {viewMode === 'schedule' && <ScheduleView events={scheduleEvents} hasMore={hasMoreSchedule} loading={scheduleBusy} onLoadMore={retrieveSchedule} />}
+      {viewMode === 'grades' && <GradesView grades={grades} />}
+      {viewMode === 'homework' && <HomeWorkView days={printDays} />}
     </>
   );
 }

@@ -222,6 +222,10 @@ export class EdClient {
     return this.apiCall(`v3/Eleves/${eleveId}/cahierdetexte/${date}.awp?verbe=get`);
   }
 
+  async getNotes(eleveId) {
+    return this.apiCall(`v3/eleves/${eleveId}/notes.awp?verbe=get`, 'POST', { anneeScolaire: '' });
+  }
+
   async getSchedule(eleveId, dateDebut, dateFin) {
     return this.apiCall(`v3/E/${eleveId}/emploidutemps.awp?verbe=get`, 'POST', {
       dateDebut,

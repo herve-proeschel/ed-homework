@@ -1,14 +1,15 @@
-export default function PrintAction({ onRetrieve, onPrint, canPrint, compact = false, mode = 'homework', busy = false }) {
-  const isSchedule = mode === 'schedule';
-  const label = isSchedule ? 'emploi du temps' : 'devoirs';
+const LABELS = { homework: 'devoirs', schedule: 'emploi du temps', grades: 'notes' };
+
+export default function PrintAction({ onRetrieve, onPrint, canPrint, hasData = false, compact = false, mode = 'homework', busy = false }) {
+  const label = LABELS[mode] || LABELS.homework;
   return (
     <div className={`action-row${compact ? ' action-row--compact' : ''}`}>
       <button
         type="button"
         className={compact ? 'action-icon-btn' : 'main-btn'}
         onClick={onRetrieve}
-        title={canPrint ? `Actualiser ${label}` : `Télécharger ${label}`}
-        aria-label={canPrint ? `Actualiser ${label}` : `Télécharger ${label}`}
+        title={canPrint || hasData ? `Actualiser ${label}` : `Télécharger ${label}`}
+        aria-label={canPrint || hasData ? `Actualiser ${label}` : `Télécharger ${label}`}
         disabled={busy}
       >
         {compact ? '⇩' : `Télécharger ${label}`}
