@@ -129,21 +129,23 @@ export default function ThemeMenu({ viewMode, onSelectView }) {
         aria-expanded={isOpen}
         aria-haspopup="menu"
         aria-controls="app-more-menu"
-        aria-label="Plus d'options"
-        title="Plus d'options"
+        aria-label="Menu principal"
+        title="Menu principal"
       >
         <svg className="theme-menu-trigger-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+          <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
         </svg>
       </button>
+      {isOpen && <div className="theme-menu-scrim" onClick={() => closeMenu(true)} aria-hidden="true" />}
       {isOpen && (
         <div
           className="theme-menu-popover"
           id="app-more-menu"
           role="menu"
-          aria-label="Plus d'options"
+          aria-label="Menu principal"
           onKeyDown={handleMenuKeyDown}
         >
+          <p className="theme-menu-drawer-title">Cahier de Texte</p>
           <p className="theme-menu-section-title">Navigation</p>
           {VIEW_OPTIONS.map((option, index) => (
             <button
