@@ -30,10 +30,24 @@ Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou
   * Pas d'impression pour cette vue.
 * **Export & Impression PDF instantanés :**
   * Bouton dédié pour imprimer les devoirs ou l'emploi du temps téléchargé.
-  * L'emploi du temps est imprimé semaine par semaine, du lundi au vendredi, comme dans l'extension `ed-chrome-extension`.
+  * L'emploi du temps est imprimé semaine par semaine, du lundi au vendredi.
   * Feuille de style optimisée `@media print` avec pagination automatique A4, masquant les éléments d'interface parasites.
   * Déclenchement via `window.print()` vers une imprimante physique ou la sortie PDF native du navigateur.
 * **PWA hors ligne partielle :** Le shell et les assets générés sont précachés par un service worker en production. Les appels à l'API et les données privées restent toujours récupérés sur le réseau.
+
+---
+
+## Captures Google Play — format téléphone
+
+Captures portrait au format 1080 × 2160, réalisées dans l'interface mobile de l'application. Les exemples utilisent uniquement des données fictives : aucun identifiant, nom ou renseignement personnel n'est affiché.
+
+<p align="center">
+  <img src="./screenshots/play-store/connection.png" alt="Écran de connexion" width="180">
+  <img src="./screenshots/play-store/devoirs.png" alt="Cahier de texte avec des devoirs fictifs" width="180">
+  <br>
+  <img src="./screenshots/play-store/emploi-du-temps.png" alt="Emploi du temps avec des cours fictifs" width="180">
+  <img src="./screenshots/play-store/notes.png" alt="Notes et moyennes fictives" width="180">
+</p>
 
 ---
 
