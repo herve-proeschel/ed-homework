@@ -1,4 +1,4 @@
-export default function HomeworkActions({ onRetrieve, onPrint, canPrint, compact = false, mode = 'homework', busy = false }) {
+export default function PrintAction({ onRetrieve, onPrint, canPrint, compact = false, mode = 'homework', busy = false }) {
   const isSchedule = mode === 'schedule';
   const label = isSchedule ? 'emploi du temps' : 'devoirs';
   return (

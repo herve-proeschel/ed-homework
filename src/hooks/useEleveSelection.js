@@ -3,16 +3,8 @@ import { getEleveAccounts } from '../services/edClient';
 
 export function useEleveSelection({ runRef }) {
   const [eleveModal, setEleveModal] = useState(null); // { eleves, selectedId, confirmed }
-  const eleveResolverRef = useRef(null);
   const eleveListRef = useRef([]);
   const selectedEleveIdRef = useRef(null);
-
-  const askEleve = useCallback((eleves) => {
-    return new Promise((resolve) => {
-      eleveResolverRef.current = resolve;
-      setEleveModal({ eleves, selectedId: String(eleves[0]?.id ?? ''), confirmed: false });
-    });
-  }, []);
 
   const selectEleveOption = useCallback((id) => {
     setEleveModal((prev) => (prev ? { ...prev, selectedId: id } : prev));
@@ -26,12 +18,7 @@ export function useEleveSelection({ runRef }) {
     setEleveModal((prev) => {
       if (prev) {
         selectedEleveIdRef.current = prev.selectedId;
-        if (eleveResolverRef.current) {
-          eleveResolverRef.current(prev.selectedId);
-        } else {
-          runRef.current?.();
-        }
-        eleveResolverRef.current = null;
+        runRef.current?.();
         return { ...prev, confirmed: true };
       }
       return prev;
@@ -49,9 +36,12 @@ export function useEleveSelection({ runRef }) {
         selectedEleveIdRef.current = String(studentId);
         return String(studentId);
       }
-      return askEleve(eleves);
+      const firstEleveId = String(eleves[0].id);
+      selectedEleveIdRef.current = firstEleveId;
+      setEleveModal({ eleves, selectedId: firstEleveId, confirmed: true });
+      return firstEleveId;
     },
-    [askEleve],
+    [],
   );
 
   return {

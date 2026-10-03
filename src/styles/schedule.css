@@ -122,8 +122,9 @@
 
   .schedule-hours--shared {
     position: absolute;
-    top: 0;
-    bottom: 0;
+    top: 31px;
+    height: 150mm;
+    bottom: auto;
     left: 0;
     display: block;
     width: 22px;

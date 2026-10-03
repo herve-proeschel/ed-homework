@@ -4,7 +4,7 @@ import StatusMessage from './components/StatusMessage';
 import QcmModal from './components/QcmModal';
 import EleveModal from './components/EleveModal';
 import HomeWorkView from './components/HomeWorkView';
-import HomeworkActions from './components/HomeworkActions';
+import PrintAction from './components/PrintAction';
 import ThemeMenu from './components/ThemeMenu';
 import LoginForm from './components/LoginForm';
 import LoggedUser from './components/LoggedUser';
@@ -82,7 +82,7 @@ function App() {
                 isError={statusIsError}
                 emptyMessage={viewMode === 'schedule' ? 'Téléchargez l’emploi du temps.' : 'Téléchargez les devoirs.'}
               />
-              <HomeworkActions
+              <PrintAction
                 onRetrieve={viewMode === 'schedule' ? retrieveSchedule : eleveModal && !eleveModal.confirmed ? confirmEleve : run}
                 onPrint={printHomework}
                 canPrint={Boolean(viewMode === 'schedule' ? scheduleEvents.length : printDays?.length)}

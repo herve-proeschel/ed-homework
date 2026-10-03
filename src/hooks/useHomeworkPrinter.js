@@ -10,6 +10,7 @@ export function useHomeworkPrinter() {
   const runRef = useRef(null);
   const downloadedDaysByEleveRef = useRef({});
   const scheduleEventsByEleveRef = useRef({});
+  const autoDownloadKeyRef = useRef('');
   const [viewMode, setViewMode] = useState('homework');
   const [scheduleEvents, setScheduleEvents] = useState([]);
   const [scheduleBusy, setScheduleBusy] = useState(false);
@@ -86,6 +87,7 @@ export function useHomeworkPrinter() {
     const eleveId = selectedEleveIdRef.current;
     if (!eleveId || scheduleBusy) return;
     setScheduleBusy(true);
+    logStatus(scheduleWeekCount ? 'Téléchargement de la semaine suivante...' : 'Téléchargement de l’emploi du temps...');
     try {
       const events = await loadScheduleWeek(eleveId, scheduleWeekCount);
       if (events.length === 0) {
@@ -144,6 +146,12 @@ export function useHomeworkPrinter() {
 
         selectedEleveIdRef.current = eleveId;
         persistSession(accountDisplayName);
+      }
+
+      if (viewMode === 'schedule') {
+        setBusy(false);
+        await retrieveSchedule();
+        return;
       }
 
       logStatus('Lecture du planning du cahier de texte...');
@@ -241,11 +249,29 @@ export function useHomeworkPrinter() {
     setPrintDays,
     setDisplayName,
     setIsLoggedIn,
+    viewMode,
+    retrieveSchedule,
   ]);
 
   useEffect(() => {
     runRef.current = run;
   }, [run]);
+
+  useEffect(() => {
+    const selectedEleveId = selectedEleveIdRef.current;
+    if (!isLoggedIn || !selectedEleveId || busy || scheduleBusy) return undefined;
+    const autoDownloadKey = `${selectedEleveId}:${viewMode}`;
+    if (autoDownloadKeyRef.current === autoDownloadKey) return undefined;
+    if (viewMode === 'schedule' && scheduleEvents.length) return undefined;
+    if (viewMode === 'homework' && printDays) return undefined;
+
+    autoDownloadKeyRef.current = autoDownloadKey;
+    const timer = window.setTimeout(() => {
+      if (viewMode === 'schedule') retrieveSchedule();
+      else run();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [busy, isLoggedIn, printDays, retrieveSchedule, run, scheduleBusy, scheduleEvents.length, selectedEleveIdRef, viewMode]);
 
   return {
     username,
