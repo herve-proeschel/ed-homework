@@ -1,8 +1,8 @@
-# ed-homework
+﻿# ed-homework
 
 Application React autonome (SPA 100 % client-side) construite avec **Vite**, installable comme PWA et déployable sur un hébergement statique comme **GitHub Pages**.
 
-Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou élève), de gérer la validation 2FA, de choisir un profil élève, de consulter les devoirs et l'emploi du temps, puis de les imprimer ou de les exporter au format papier ou PDF.
+Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou élève), de gérer la validation 2FA, de choisir un profil élève, de consulter les devoirs, l'emploi du temps et les notes, puis d'imprimer les devoirs et l'emploi du temps ou de les exporter au format papier ou PDF.
 
 ---
 
@@ -18,9 +18,16 @@ Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou
   * Décodage automatique du descriptif des devoirs (données Base64 + assainissement HTML).
   * Statut d'avancement (fait / à faire).
 * **Consultation de l'emploi du temps :**
-  * Bascule entre « Cahier de Texte » et « Emploi du temps » en cliquant sur le titre.
+  * Bascule entre « Cahier de Texte », « Emploi du temps » et « Notes » en cliquant sur le titre.
   * Téléchargement de la semaine courante, puis de la semaine suivante au défilement.
   * Affichage vertical par jour dans l'application, sans échelle horaire répétitive.
+* **Consultation des notes :**
+  * Une boîte « Moyenne générale » puis une boîte par matière ayant des notes, avec la moyenne de l'élève comparée à celle de la classe et l'écart entre les deux.
+  * Liste des notes reçues par matière (date, devoir, valeur, coefficient, moyenne de classe du devoir). Les notes d'une sous-matière (Oral, Écrit) sont rattachées à la matière parente.
+  * Indicateur de tendance (▲ hausse, ▬ stable, ▼ baisse) : la moyenne avec et sans les notes de la date la plus récente est comparée, avec un seuil de 0,25 point.
+  * Rappel de la moyenne de la période précédente (semestre ou trimestre) lorsqu'elle existe, et onglets pour changer de période.
+  * Les moyennes sont recalculées à partir des notes (ramenées sur 20 et pondérées par leur coefficient ; la moyenne générale est pondérée par les coefficients des matières), car les moyennes et le rang renvoyés par l'API peuvent être en retard ou incohérents. Le rang n'est pas affiché.
+  * Pas d'impression pour cette vue.
 * **Export & Impression PDF instantanés :**
   * Bouton dédié pour imprimer les devoirs ou l'emploi du temps téléchargé.
   * L'emploi du temps est imprimé semaine par semaine, du lundi au vendredi, comme dans l'extension `ed-chrome-extension`.
