@@ -46,6 +46,11 @@
   position: relative;
   top: auto;
   right: auto;
+  grid-column: 1;
+  justify-self: start;
+}
+
+.app-header > .user-badge {
   grid-column: 3;
   justify-self: end;
 }

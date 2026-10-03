@@ -18,7 +18,7 @@ Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou
   * Décodage automatique du descriptif des devoirs (données Base64 + assainissement HTML).
   * Statut d'avancement (fait / à faire).
 * **Consultation de l'emploi du temps :**
-  * Bascule entre « Cahier de Texte », « Emploi du temps » et « Notes » en cliquant sur le titre.
+  * Navigation directe vers les devoirs, l'emploi du temps et les notes depuis le menu d'options, ou bascule entre les vues en cliquant sur le titre.
   * Téléchargement de la semaine courante, puis de la semaine suivante au défilement.
   * Affichage vertical par jour dans l'application, sans échelle horaire répétitive.
 * **Consultation des notes :**

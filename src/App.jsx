@@ -44,6 +44,7 @@ function App() {
     gradesBusy,
     viewMode,
     switchView,
+    selectView,
     retrieveSchedule,
     retrieveGrades,
     run,
@@ -67,9 +68,9 @@ function App() {
     <>
       <div className="container" id="appContainer">
         <div className="app-header">
-          {isLoggedIn && <LoggedUser displayName={displayName} username={username} onDisconnect={disconnect} />}
+          <ThemeMenu viewMode={viewMode} onSelectView={selectView} />
           <h1><button type="button" className="title-switch" onClick={switchView}>{VIEW_TITLES[viewMode]}</button></h1>
-          <ThemeMenu />
+          {isLoggedIn && <LoggedUser displayName={displayName} username={username} onDisconnect={disconnect} />}
         </div>
 
         {!isLoggedIn && (

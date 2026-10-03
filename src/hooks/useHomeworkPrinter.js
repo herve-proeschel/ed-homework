@@ -6,6 +6,12 @@ import { usePrintHomework } from './usePrintHomework';
 import { useEleveSelection } from './useEleveSelection';
 import { useAuthSession } from './useAuthSession';
 
+const VIEW_STATUS_MESSAGES = {
+  homework: 'Téléchargez les devoirs.',
+  schedule: 'Téléchargez l’emploi du temps.',
+  grades: 'Téléchargez les notes.',
+};
+
 export function useHomeworkPrinter() {
   const runRef = useRef(null);
   const downloadedDaysByEleveRef = useRef({});
@@ -152,13 +158,15 @@ export function useHomeworkPrinter() {
     }
   }, [clientRef, gradesBusy, handleSessionExpired, logStatus, selectedEleveIdRef]);
 
-  const switchView = useCallback(() => {
-    setViewMode((mode) => {
-      const nextMode = { homework: 'schedule', schedule: 'grades', grades: 'homework' }[mode];
-      logStatus({ schedule: 'Téléchargez l’emploi du temps.', grades: 'Téléchargez les notes.', homework: 'Téléchargez les devoirs.' }[nextMode]);
-      return nextMode;
-    });
+  const selectView = useCallback((mode) => {
+    setViewMode(mode);
+    logStatus(VIEW_STATUS_MESSAGES[mode]);
   }, [logStatus]);
+
+  const switchView = useCallback(() => {
+    const nextMode = { homework: 'schedule', schedule: 'grades', grades: 'homework' }[viewMode];
+    selectView(nextMode);
+  }, [selectView, viewMode]);
 
   const run = useCallback(async () => {
     if (!username || (!isLoggedIn && !password)) {
@@ -339,6 +347,7 @@ export function useHomeworkPrinter() {
     gradesBusy,
     viewMode,
     switchView,
+    selectView,
     retrieveSchedule,
     retrieveGrades,
     buildPrintHtml,
