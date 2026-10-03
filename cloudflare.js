@@ -64,6 +64,10 @@ function routeInfo(request, url) {
     && url.searchParams.get("verbe") === "get" && isAllowedQuery(url, ["verbe", "v"])) {
     return { kind: "homework" };
   }
+  if (method === "POST" && /^\/v3\/E\/\d+\/emploidutemps\.awp$/.test(path)
+    && url.searchParams.get("verbe") === "get" && isAllowedQuery(url, ["verbe", "v"])) {
+    return { kind: "schedule" };
+  }
   return null;
 }
 
