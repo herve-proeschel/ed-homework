@@ -176,3 +176,75 @@
     display: none;
   }
 }
+
+@media screen {
+  #gradesView {
+    font-family: var(--font-ui);
+  }
+
+  .grades-periods {
+    gap: 8px;
+    padding-bottom: 4px;
+  }
+
+  .grades-period {
+    padding: 0 16px;
+    height: 32px;
+    border-radius: 8px;
+    background: transparent;
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .grades-period:hover {
+    background: var(--state-hover);
+  }
+
+  .grades-period.is-active {
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+    border-color: transparent;
+  }
+
+  .grades-subject {
+    border: 1px solid var(--border-soft);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgb(60 64 67 / 15%);
+  }
+
+  .grades-subject > header,
+  .grades-subject--general > header {
+    padding: 12px 16px;
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+  }
+
+  .grades-subject h2 {
+    font-weight: 500;
+  }
+
+  .grade-item {
+    padding: 12px 16px;
+    border-top-color: var(--border-soft);
+  }
+
+  .grades-compare {
+    padding: 12px 16px;
+  }
+
+  .grade-trend {
+    background: var(--card);
+  }
+
+  .grade-trend--up { color: #146c2e; }
+  .grade-trend--down { color: var(--error); }
+
+  [data-theme='dark'] .grade-trend--up { color: #6dd58c; }
+
+  .grade-bar-fill--class { background: var(--border); }
+  .grades-diff:not(.is-negative) { color: #146c2e; }
+  .grades-diff.is-negative { color: var(--error); }
+
+  [data-theme='dark'] .grades-diff:not(.is-negative) { color: #6dd58c; }
+}

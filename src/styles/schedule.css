@@ -236,3 +236,47 @@
     display: none;
   }
 }
+@media screen {
+  #scheduleView {
+    font-family: var(--font-ui);
+  }
+
+  .schedule-week > h2 {
+    margin: 0 0 8px;
+    padding: 8px 16px;
+    border-radius: 16px;
+    background-color: var(--primary-container);
+    color: var(--on-primary-container);
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  .schedule-day > header {
+    padding: 4px 16px;
+    border-bottom: 0;
+    color: var(--muted-text);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  #scheduleView .schedule-event {
+    padding: 12px 16px;
+    border: 1px solid var(--border-soft);
+    border-left: 4px solid var(--event-color);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgb(60 64 67 / 15%);
+  }
+
+  .schedule-event h3 {
+    font-weight: 500;
+  }
+
+  .schedule-cancelled {
+    display: inline-block;
+    padding: 0 8px;
+    border-radius: 8px;
+    background: var(--error-container);
+    color: var(--error);
+    font-size: 0.75rem;
+  }
+}

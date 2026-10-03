@@ -2,15 +2,32 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 const THEME_KEY = 'ed_theme';
 const THEME_OPTIONS = [
-  { value: 'system', label: 'Système' },
-  { value: 'light', label: 'Clair' },
-  { value: 'dark', label: 'Sombre' },
+  { value: 'system', label: 'Système', icon: 'system' },
+  { value: 'light', label: 'Clair', icon: 'light' },
+  { value: 'dark', label: 'Sombre', icon: 'dark' },
 ];
 const VIEW_OPTIONS = [
-  { value: 'homework', label: 'Cahier de Texte' },
-  { value: 'schedule', label: 'Emploi du temps' },
-  { value: 'grades', label: 'Notes' },
+  { value: 'homework', label: 'Cahier de Texte', icon: 'homework' },
+  { value: 'schedule', label: 'Emploi du temps', icon: 'schedule' },
+  { value: 'grades', label: 'Notes', icon: 'grades' },
 ];
+
+const MENU_ICONS = {
+  homework: <><path d="M6 3.5h9l3 3V20.5H6z" /><path d="M15 3.5v4h3M9 12h6M9 16h6" /></>,
+  schedule: <><rect x="4" y="5.5" width="16" height="15" rx="1.5" /><path d="M8 3.5v4M16 3.5v4M4 10h16M8 13.5h.01M12 13.5h.01M16 13.5h.01M8 17h.01M12 17h.01" /></>,
+  grades: <><path d="M5 19.5V11M10 19.5V7M15 19.5V13M20 19.5V4.5" /></>,
+  system: <><rect x="3.5" y="4" width="17" height="12" rx="1.5" /><path d="M8 20h8M12 16v4" /></>,
+  light: <><circle cx="12" cy="12" r="3.5" /><path d="M12 2.5v2M12 19.5v2M21.5 12h-2M4.5 12h-2M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4M18.7 18.7l-1.4-1.4M6.7 6.7L5.3 5.3" /></>,
+  dark: <path d="M20.2 15.3A8.5 8.5 0 0 1 8.7 3.8 8.5 8.5 0 1 0 20.2 15.3z" />,
+};
+
+function MenuIcon({ name }) {
+  return (
+    <svg className="theme-option-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      {MENU_ICONS[name]}
+    </svg>
+  );
+}
 
 function getStoredTheme() {
   const storedTheme = localStorage.getItem(THEME_KEY);
@@ -112,17 +129,19 @@ export default function ThemeMenu({ viewMode, onSelectView }) {
         aria-expanded={isOpen}
         aria-haspopup="menu"
         aria-controls="app-more-menu"
-        aria-label="Options de navigation et de thème"
-        title="Options de navigation et de thème"
+        aria-label="Plus d'options"
+        title="Plus d'options"
       >
-        <span aria-hidden="true">⋮</span>
+        <svg className="theme-menu-trigger-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+        </svg>
       </button>
       {isOpen && (
         <div
           className="theme-menu-popover"
           id="app-more-menu"
           role="menu"
-          aria-label="Options de l'application"
+          aria-label="Plus d'options"
           onKeyDown={handleMenuKeyDown}
         >
           <p className="theme-menu-section-title">Navigation</p>
@@ -139,8 +158,11 @@ export default function ThemeMenu({ viewMode, onSelectView }) {
                 closeMenu(true);
               }}
             >
-              <span>{option.label}</span>
-              {viewMode === option.value && <span aria-hidden="true">✓</span>}
+              <span className="theme-option-label">
+                <MenuIcon name={option.icon} />
+                <span>{option.label}</span>
+              </span>
+              {viewMode === option.value && <span className="theme-option-check" aria-hidden="true">✓</span>}
             </button>
           ))}
           <div className="theme-menu-divider" />
@@ -155,8 +177,11 @@ export default function ThemeMenu({ viewMode, onSelectView }) {
               ref={(element) => { menuItemRefs.current[VIEW_OPTIONS.length + index] = element; }}
               onClick={() => selectTheme(option.value)}
             >
-              <span>{option.label}</span>
-              {theme === option.value && <span aria-hidden="true">✓</span>}
+              <span className="theme-option-label">
+                <MenuIcon name={option.icon} />
+                <span>{option.label}</span>
+              </span>
+              {theme === option.value && <span className="theme-option-check" aria-hidden="true">✓</span>}
             </button>
           ))}
           <div className="theme-menu-divider" />

@@ -1,48 +1,98 @@
 .form-group {
-  margin-bottom: 16px;
+  position: relative;
+  margin-bottom: 20px;
   text-align: left;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 0.9rem;
-  font-weight: 600;
 }
 
 .form-group input {
   width: 100%;
   box-sizing: border-box;
-  padding: 12px;
+  height: 56px;
+  padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 4px;
   background: var(--input-bg);
   color: var(--text);
+  font: inherit;
   font-size: 1rem;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.form-group input:hover {
+  border-color: var(--text);
+}
+
+.form-group input:focus {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+  outline: none;
+}
+
+.form-group label {
+  position: absolute;
+  top: 16px;
+  left: 12px;
+  padding: 0 4px;
+  background: var(--input-bg);
+  color: var(--muted-text);
+  font-size: 1rem;
+  line-height: 24px;
+  pointer-events: none;
+  transform-origin: left top;
+  transition: transform 120ms ease, color 120ms ease;
+}
+
+.form-group input:focus + label,
+.form-group input:not(:placeholder-shown) + label {
+  transform: translateY(-25px) scale(0.75);
+}
+
+.form-group input:focus + label {
+  color: var(--primary);
 }
 
 .main-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  padding: 14px;
+  height: 40px;
+  padding: 0 24px;
   background-color: var(--primary);
   color: var(--primary-contrast);
   border: none;
-  border-radius: 8px;
-  font-size: 1.05rem;
-  font-weight: bold;
+  border-radius: 20px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   cursor: pointer;
   margin-top: 10px;
+  transition: box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.main-btn:hover:not(:disabled),
+.main-btn:focus-visible {
+  background-color: var(--primary-hover);
+  box-shadow: 0 1px 2px rgb(60 64 67 / 30%), 0 1px 3px 1px rgb(60 64 67 / 15%);
+  outline: none;
+}
+
+[data-theme='dark'] .main-btn:hover:not(:disabled),
+[data-theme='dark'] .main-btn:focus-visible {
+  background-color: #c2d9fc;
 }
 
 .main-btn:disabled {
-  background-color: #94a3b8;
+  background-color: var(--disabled-bg);
+  color: var(--disabled-text);
   cursor: not-allowed;
 }
 
 .action-row {
   display: flex;
-  gap: 10px;
-  align-items: stretch;
+  gap: 8px;
+  align-items: center;
 }
 
 .action-row .main-btn {
@@ -52,54 +102,53 @@
 
 .action-row--compact {
   gap: 8px;
-  margin-top: 16px;
+  margin-top: 0;
 }
 
-.action-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  flex: 0 0 42px;
-  height: 42px;
-  padding: 0;
-  border: 0;
-  border-radius: 8px;
-  background: var(--primary);
-  color: #fff;
-  font-size: 1.4rem;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.action-icon-btn:hover {
-  background: var(--primary-hover);
-}
-
+.action-icon-btn,
 .print-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  flex: 0 0 52px;
+  width: 48px;
+  flex: 0 0 48px;
+  height: 48px;
   padding: 0;
   border: 0;
-  border-radius: 8px;
-  background: var(--primary);
-  color: #fff;
-  font-size: 1.3rem;
+  border-radius: 16px;
+  background: var(--primary-container);
+  color: var(--on-primary-container);
   line-height: 1;
   cursor: pointer;
+  transition: box-shadow 120ms ease;
+}
+
+.action-icon-btn:hover:not(:disabled),
+.print-btn:hover,
+.action-icon-btn:focus-visible,
+.print-btn:focus-visible {
+  box-shadow: 0 1px 2px rgb(60 64 67 / 30%), 0 1px 3px 1px rgb(60 64 67 / 15%);
+  outline: none;
+}
+
+.action-icon-btn:disabled {
+  background: var(--disabled-bg);
+  color: var(--disabled-text);
+  cursor: not-allowed;
+}
+
+.action-icon-btn svg,
+.print-btn svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.print-btn {
   margin-top: 10px;
 }
 
-.print-btn:hover {
-  background: var(--primary-hover);
-}
-
 .action-row--compact .print-btn {
-  width: 42px;
-  height: 42px;
-  flex-basis: 42px;
   margin-top: 0;
 }

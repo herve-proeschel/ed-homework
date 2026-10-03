@@ -1,8 +1,8 @@
 .qcm-modal {
   background: var(--card);
-  border: 2px solid var(--primary);
+  border: 1px solid var(--border);
   padding: 16px;
-  border-radius: 8px;
+  border-radius: 16px;
   margin-top: 16px;
   text-align: left;
 }
@@ -15,63 +15,95 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgb(15 23 42 / 45%);
+  background: rgb(0 0 0 / 32%);
 }
 
 .disconnect-modal {
-  width: min(100%, 380px);
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--card);
+  width: min(100%, 400px);
+  padding: 24px;
+  border-radius: 28px;
+  background: var(--menu-surface);
   color: var(--text);
-  box-shadow: 0 12px 32px rgb(15 23 42 / 25%);
+  box-shadow: 0 4px 8px 3px rgb(0 0 0 / 15%), 0 1px 3px rgb(0 0 0 / 30%);
 }
 
 .disconnect-modal h2 {
-  margin: 0 0 8px;
-  font-size: 1.15rem;
+  margin: 0 0 16px;
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1.33;
 }
 
 .disconnect-modal p {
   margin: 0;
   color: var(--muted-text);
+  font-size: 0.875rem;
 }
 
 .disconnect-modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 20px;
+  margin-top: 24px;
 }
 
 .disconnect-modal-actions .main-btn,
 .secondary-btn {
   width: auto;
-  min-width: 88px;
+  min-width: 64px;
+  height: 40px;
   margin-top: 0;
-  padding: 10px 14px;
-  font-size: 0.95rem;
+  padding: 0 24px;
+  font-size: 0.875rem;
 }
 
 .secondary-btn {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--subtle-bg);
-  color: var(--text);
+  border: 0;
+  border-radius: 20px;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
+}
+
+.secondary-btn:hover,
+.secondary-btn:focus-visible {
+  background: var(--state-hover);
+  outline: none;
+}
+
+.disconnect-modal-actions .main-btn {
+  background: transparent;
+  color: var(--primary);
+  padding: 0 16px;
+}
+
+.disconnect-modal-actions .main-btn:hover,
+.disconnect-modal-actions .main-btn:focus-visible {
+  background: var(--state-hover);
+  box-shadow: none;
 }
 
 .qcm-option {
   width: 100%;
-  padding: 10px;
+  padding: 12px 16px;
   margin: 6px 0;
-  background: var(--subtle-bg);
+  background: transparent;
+  color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.95rem;
+  border-radius: 20px;
+  font: inherit;
+  font-size: 0.875rem;
   text-align: left;
   cursor: pointer;
+}
+
+.qcm-option:hover,
+.qcm-option:focus-visible {
+  background: var(--state-hover);
+  outline: none;
 }
 
 .eleve-modal {
@@ -98,26 +130,43 @@
 }
 
 .eleve-reopen-btn {
-  padding: 4px 8px;
+  padding: 0 16px;
+  height: 32px;
   border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--subtle-bg);
+  border-radius: 8px;
+  background: transparent;
   color: var(--text);
   cursor: pointer;
-  font-size: 0.8rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.eleve-reopen-btn:hover,
+.eleve-reopen-btn:focus-visible {
+  background: var(--state-hover);
+  outline: none;
 }
 
 .eleve-modal select {
   width: 100%;
   box-sizing: border-box;
-  padding: 12px;
+  height: 56px;
+  padding: 0 12px;
   border: 1px solid var(--border);
   background: var(--input-bg);
   color: var(--text);
-  border-radius: 6px;
+  border-radius: 4px;
+  font: inherit;
   font-size: 1rem;
   margin-top: 8px;
   margin-bottom: 10px;
+}
+
+.eleve-modal select:focus {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+  outline: none;
 }
 
 .eleve-preview {
@@ -133,5 +182,5 @@
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  background: #cbd5e1;
+  background: var(--subtle-bg);
 }

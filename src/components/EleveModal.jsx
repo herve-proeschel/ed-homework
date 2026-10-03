@@ -13,7 +13,7 @@ export default function EleveModal({ eleveModal, onSelect, onReopen }) {
       aria-label={confirmed ? "Changer d'élève" : "Fermer la sélection"}
       aria-expanded={!confirmed}
     >
-      &#9998;
+      {confirmed ? 'Changer' : 'Fermer'}
     </button>
   );
 
