@@ -2,7 +2,7 @@
 
 Application React autonome (SPA 100 % client-side) construite avec **Vite**, installable comme PWA et déployable sur un hébergement statique comme **GitHub Pages**.
 
-Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou élève), de gérer la validation 2FA, de choisir un profil élève, de consulter les devoirs à venir et d'imprimer ou d'exporter l'intégralité du cahier de texte au format papier ou PDF.
+Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou élève), de gérer la validation 2FA, de choisir un profil élève, de consulter les devoirs et l'emploi du temps, puis de les imprimer ou de les exporter au format papier ou PDF.
 
 ---
 
@@ -17,9 +17,14 @@ Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou
   * Récupération des devoirs des dates futures, avec progression affichée pendant la collecte.
   * Décodage automatique du descriptif des devoirs (données Base64 + assainissement HTML).
   * Statut d'avancement (fait / à faire).
+* **Consultation de l'emploi du temps :**
+  * Bascule entre « Cahier de Texte » et « Emploi du temps » en cliquant sur le titre.
+  * Téléchargement de la semaine courante, puis de la semaine suivante au défilement.
+  * Affichage vertical par jour dans l'application, sans échelle horaire répétitive.
 * **Export & Impression PDF instantanés :**
-  * Bouton dédié qui compile la totalité du planning récupéré.
-  * Feuille de style optimisée `@media print` avec pagination automatique A4 (`page-break-inside: avoid`), masquant les éléments d'interface parasite (barres de navigation, boutons, filtres).
+  * Bouton dédié pour imprimer les devoirs ou l'emploi du temps téléchargé.
+  * L'emploi du temps est imprimé semaine par semaine, du lundi au vendredi, comme dans l'extension `ed-chrome-extension`.
+  * Feuille de style optimisée `@media print` avec pagination automatique A4, masquant les éléments d'interface parasites.
   * Déclenchement via `window.print()` vers une imprimante physique ou la sortie PDF native du navigateur.
 * **PWA hors ligne partielle :** Le shell et les assets générés sont précachés par un service worker en production. Les appels à l'API et les données privées restent toujours récupérés sur le réseau.
 
@@ -41,6 +46,7 @@ Il n'y a actuellement **aucun proxy Vite local** ni backend exécuté avec le fr
 ### 2. Format des requêtes ÉcoleDirecte
 * Les requêtes vers l'API sont émises en `POST` avec le payload sérialisé au format form-urlencoded : `data={"identifiant":"...","motdepasse":"..."}`.
 * Les requêtes authentifiées véhiculent l'en-tête `X-Token`.
+* L'emploi du temps utilise `POST /v3/E/{eleveId}/emploidutemps.awp?verbe=get` avec `dateDebut`, `dateFin` et `avecTrous: false`.
 
 ---
 
@@ -72,7 +78,7 @@ Le build accepte `VITE_BASE_URL` pour définir le chemin de base d'un déploieme
 
 ### Déployer le proxy Cloudflare
 
-Le Worker défini dans `cloudflare.js` est déployé par le workflow GitHub Actions **Deploy Cloudflare Worker**. Ce workflow est manuel : il ne s'exécute pas lors d'un push.
+Le Worker défini dans `cloudflare.js` est déployé par le workflow GitHub Actions **Deploy Cloudflare Worker**. Le workflow se déclenche automatiquement sur `main` ou `master` lorsqu'un push modifie `cloudflare.js`, `wrangler.toml` ou le workflow lui-même. Il reste également lançable manuellement.
 
 Dans les paramètres du dépôt GitHub, créez l'environnement `cloudflare-production`, activez une approbation obligatoire pour cet environnement, puis ajoutez ces secrets d'environnement :
 
@@ -80,13 +86,13 @@ Dans les paramètres du dépôt GitHub, créez l'environnement `cloudflare-produ
 * `CLOUDFLARE_ACCOUNT_ID` : l'identifiant du compte Cloudflare `xxx`.
 * `CLOUDFLARE_WORKER_NAME` : le nom du Worker Cloudflare à publier.
 
-Pour déployer, ouvrez **Actions > Deploy Cloudflare Worker > Run workflow**. GitHub demandera l'approbation de l'environnement avant d'utiliser les secrets.
+Pour un déploiement manuel, ouvrez **Actions > Deploy Cloudflare Worker > Run workflow**. GitHub demandera l'approbation de l'environnement avant d'utiliser les secrets.
 
 Ajoutez également les secrets d'environnement `ALLOWED_ORIGINS` et `CLOUDFLARE_WORKER_NAME`. Par exemple, `ALLOWED_ORIGINS` peut contenir `https://herve-proeschel.github.io,http://localhost:5173,http://127.0.0.1:5173` et `CLOUDFLARE_WORKER_NAME` peut contenir `ed-cors-proxy`. Le workflow injecte directement ces secrets dans la commande Wrangler; le nom du Worker et les origines autorisées ne sont pas codés dans le dépôt.
 
 Pour le workflow GitHub Pages, ajoutez également le secret d'environnement `VITE_PROXY_BASE_URL` contenant l'URL publique du Worker dans `cloudflare-production`. Le job de build GitHub Pages utilise cet environnement pour accéder au secret. Comme cette valeur est utilisée par le navigateur, Vite l'intègre au JavaScript généré : elle ne doit donc pas contenir un secret réel.
 
-Le worker n'autorise que les routes et méthodes utilisées par l'application, limite les corps à 64 KiB et annule les appels amont après 10 secondes. Les tentatives de connexion sont limitées à 5 par minute et par adresse IP, et les réponses 2FA à 5 par 10 minutes. Pour un rate limiting distribué entre les instances Cloudflare, configurer les bindings `LOGIN_RATE_LIMITER` et `TWO_FA_RATE_LIMITER`; sans ces bindings, un limiteur mémoire local fournit un filet de sécurité non distribué.
+Le worker n'autorise que les routes et méthodes utilisées par l'application, limite les corps à 64 KiB et annule les appels amont après 10 secondes. Les tentatives de connexion et les réponses 2FA sont limitées à 5 par minute et par adresse IP. Pour un rate limiting distribué entre les instances Cloudflare, configurer les bindings `LOGIN_RATE_LIMITER` et `TWO_FA_RATE_LIMITER`; sans ces bindings, un limiteur mémoire local fournit un filet de sécurité non distribué.
 
 Dans `wrangler.toml`, déclarez les deux bindings avec des `namespace_id` distincts :
 
@@ -99,10 +105,10 @@ simple = { limit = 5, period = 60 }
 [[ratelimits]]
 name = "TWO_FA_RATE_LIMITER"
 namespace_id = "1002"
-simple = { limit = 5, period = 600 }
+simple = { limit = 5, period = 60 }
 ```
 
-Le premier binding limite les connexions à 5 tentatives par minute et par adresse IP. Le second limite les validations 2FA à 5 tentatives par 10 minutes et par adresse IP. Déployez ensuite le Worker avec `npx wrangler deploy`.
+Les deux bindings limitent les connexions et les validations 2FA à 5 tentatives par minute et par adresse IP. Déployez ensuite le Worker avec `npx wrangler deploy`.
 
 ## Stockage et sécurité
 

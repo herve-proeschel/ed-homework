@@ -1,3 +1,4 @@
+| Cloudflare Worker | Ajouter les en-têtes attendus par EcoleDirecte, transmettre le corps et exposer les en-têtes de session au navigateur pour le cahier de texte et l'emploi du temps. |
 # Architecture d'infrastructure
 
 ## 1. Perimetre et etat actuel
@@ -113,7 +114,7 @@ La deconnexion et l'expiration de session recreent `EdClient`, effacent la sessi
 
 ### Limites et configuration de production
 
-Les tentatives de connexion sont limitees a 5 par minute et par adresse IP, et les validations 2FA a 5 par 10 minutes. Le Worker utilise les bindings Cloudflare `LOGIN_RATE_LIMITER` et `TWO_FA_RATE_LIMITER` lorsqu'ils sont configures; sinon un limiteur memoire local est utilise comme protection de secours, sans garantie distribuee.
+Les tentatives de connexion et les validations 2FA sont limitees a 5 par minute et par adresse IP. Le Worker utilise les bindings Cloudflare `LOGIN_RATE_LIMITER` et `TWO_FA_RATE_LIMITER` lorsqu'ils sont configures; sinon un limiteur memoire local est utilise comme protection de secours, sans garantie distribuee.
 
 Le Worker ne journalise pas les corps, tokens, cookies ou mots de passe. Les reponses d'erreur sont generiques. Ajouter le secret d'environnement `ALLOWED_ORIGINS` avec les origines exactes autorisees et activer les deux bindings de rate limiting avant une exposition publique.
 

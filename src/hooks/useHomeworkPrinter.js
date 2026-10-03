@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getAccountFullName, isSessionExpiredError } from '../services/edClient';
 import { saveUsername } from '../services/sessionStorage';
 import { useStatusMessage } from './useStatusMessage';
@@ -9,6 +9,11 @@ import { useAuthSession } from './useAuthSession';
 export function useHomeworkPrinter() {
   const runRef = useRef(null);
   const downloadedDaysByEleveRef = useRef({});
+  const scheduleEventsByEleveRef = useRef({});
+  const [viewMode, setViewMode] = useState('homework');
+  const [scheduleEvents, setScheduleEvents] = useState([]);
+  const [scheduleBusy, setScheduleBusy] = useState(false);
+  const [scheduleWeekCount, setScheduleWeekCount] = useState(0);
 
   const { status, statusIsError, logStatus } = useStatusMessage();
 
@@ -21,10 +26,13 @@ export function useHomeworkPrinter() {
     (id) => {
       selectEleveOption(id);
       const cachedDays = downloadedDaysByEleveRef.current[id] || null;
+      const cachedSchedule = scheduleEventsByEleveRef.current[id] || [];
       setPrintDays(cachedDays);
+      setScheduleEvents(cachedSchedule);
+      setScheduleWeekCount(cachedSchedule.length ? 1 : 0);
       logStatus(cachedDays?.length ? 'Devoirs récupérés, prêts à imprimer.' : '');
     },
-    [selectEleveOption, setPrintDays, logStatus],
+    [selectEleveOption, setPrintDays, setScheduleEvents, logStatus],
   );
 
   const {
@@ -46,7 +54,63 @@ export function useHomeworkPrinter() {
     persistSession,
     handleSessionExpired,
     disconnect,
-  } = useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays });
+  } = useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents });
+
+  const dateKey = (date) => date.toISOString().split('T')[0];
+  const startOfWeek = (date) => {
+    const monday = new Date(date);
+    const day = monday.getDay() || 7;
+    monday.setDate(monday.getDate() - day + 1);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+  };
+
+  const loadScheduleWeek = useCallback(async (eleveId, weekOffset) => {
+    const weekStart = startOfWeek(new Date());
+    weekStart.setDate(weekStart.getDate() + weekOffset * 7);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    const response = await clientRef.current.getSchedule(eleveId, dateKey(weekStart), dateKey(weekEnd));
+    if (!response || response.code !== 200) {
+      throw new Error(response?.message || 'Erreur lors de la lecture de l’emploi du temps.');
+    }
+    if (!Array.isArray(response.data)) {
+      throw new Error('Le format de l’emploi du temps reçu est invalide.');
+    }
+    return response.data;
+  }, [clientRef]);
+
+  const retrieveSchedule = useCallback(async () => {
+    const eleveId = selectedEleveIdRef.current;
+    if (!eleveId || scheduleBusy) return;
+    setScheduleBusy(true);
+    try {
+      const events = await loadScheduleWeek(eleveId, scheduleWeekCount);
+      const merged = new Map((scheduleEventsByEleveRef.current[eleveId] || []).map((event) => [
+        `${event.id || ''}-${event.start_date || ''}-${event.end_date || ''}`,
+        event,
+      ]));
+      events.forEach((event) => merged.set(`${event.id || ''}-${event.start_date || ''}-${event.end_date || ''}`, event));
+      const nextEvents = [...merged.values()];
+      scheduleEventsByEleveRef.current[eleveId] = nextEvents;
+      setScheduleEvents(nextEvents);
+      setScheduleWeekCount((count) => count + 1);
+      logStatus(scheduleWeekCount ? 'Semaine suivante téléchargée.' : 'Emploi du temps téléchargé.');
+    } catch (error) {
+      if (isSessionExpiredError({ message: error.message })) handleSessionExpired();
+      else logStatus(`Erreur : ${error.message}`, true);
+    } finally {
+      setScheduleBusy(false);
+    }
+  }, [handleSessionExpired, loadScheduleWeek, logStatus, scheduleBusy, scheduleWeekCount, selectedEleveIdRef]);
+
+  const switchView = useCallback(() => {
+    setViewMode((mode) => {
+      const nextMode = mode === 'homework' ? 'schedule' : 'homework';
+      logStatus(nextMode === 'schedule' ? 'Téléchargez l’emploi du temps.' : 'Téléchargez les devoirs.');
+      return nextMode;
+    });
+  }, [logStatus]);
 
   const run = useCallback(async () => {
     if (!username || (!isLoggedIn && !password)) {
@@ -193,6 +257,12 @@ export function useHomeworkPrinter() {
     reopenEleve,
     confirmEleve,
     printDays,
+    scheduleEvents,
+    scheduleBusy,
+    hasMoreSchedule: scheduleWeekCount < 2,
+    viewMode,
+    switchView,
+    retrieveSchedule,
     buildPrintHtml,
     run,
     printHomework,

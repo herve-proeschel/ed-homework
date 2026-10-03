@@ -1,0 +1,102 @@
+@media screen {
+  #scheduleView {
+    width: 100%;
+    max-width: 480px;
+    margin-top: 16px;
+  }
+
+  .schedule-week {
+    margin-bottom: 24px;
+  }
+
+  .schedule-week > h2 {
+    font-size: 1.15rem;
+    background-color: #0b4e84;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 4px;
+    margin: 0 0 10px;
+  }
+
+  .schedule-grid {
+    display: block;
+  }
+
+  .schedule-day {
+    margin-bottom: 16px;
+  }
+
+  .schedule-day > header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+    padding: 6px 12px;
+    border-bottom: 2px solid #0b4e84;
+    color: #0b4e84;
+  }
+
+  .schedule-events {
+    display: block;
+  }
+
+  #scheduleView .schedule-event {
+    position: static !important;
+    display: block;
+    height: auto !important;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-left: 5px solid var(--event-color);
+    border-radius: 4px;
+    background: #fff;
+    color: #222;
+  }
+
+  .schedule-event h3 {
+    margin: 4px 0;
+    font-size: 1rem;
+  }
+
+  .schedule-time {
+    color: #555;
+    font-size: 0.85rem;
+  }
+
+  .schedule-cancelled {
+    color: #b42318;
+    font-weight: 700;
+  }
+
+  .schedule-empty,
+  .schedule-view-empty,
+  .schedule-load-more {
+    color: #666;
+    font-style: italic;
+  }
+
+  .schedule-load-more {
+    padding: 12px 0 24px;
+    text-align: center;
+  }
+
+  .schedule-hours {
+    display: none;
+  }
+
+  @media (max-width: 480px) {
+    #scheduleView {
+      margin-top: 12px;
+    }
+
+    .schedule-week > h2 {
+      font-size: 1rem;
+    }
+  }
+}
+
+@media print {
+  .schedule-hours {
+    display: block;
+  }
+}

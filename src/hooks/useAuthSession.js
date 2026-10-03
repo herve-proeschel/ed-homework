@@ -9,7 +9,7 @@ import {
   saveFa,
 } from '../services/sessionStorage';
 
-export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays }) {
+export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents }) {
   const clientRef = useRef(new EdClient());
   const [username, setUsername] = useState(() => getSavedUsername());
   const [password, setPassword] = useState('');
@@ -123,11 +123,12 @@ export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, se
       eleveListRef.current = [];
       setEleveModal(null);
       setPrintDays(null);
+      setScheduleEvents([]);
       setDisplayName('');
       clearSession();
       logStatus(msg, true);
     },
-    [logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setDisplayName],
+    [logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents, setDisplayName],
   );
 
   const disconnect = useCallback(() => {
@@ -137,11 +138,12 @@ export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, se
     eleveListRef.current = [];
     setEleveModal(null);
     setPrintDays(null);
+    setScheduleEvents([]);
     clearSession();
     setPassword('');
     setDisplayName('');
     logStatus('Vous êtes déconnecté.');
-  }, [logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setDisplayName]);
+  }, [logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents, setDisplayName]);
 
   return {
     clientRef,

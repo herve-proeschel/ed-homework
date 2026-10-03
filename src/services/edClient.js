@@ -1,5 +1,5 @@
 const PROXY_BASE_URL = import.meta.env.VITE_PROXY_BASE_URL;
-const ED_VERSION = '4.102.0';
+const ED_VERSION = '4.103.0';
 
 export function decodeBase64Utf8(str) {
   if (!str) return '';
@@ -220,6 +220,14 @@ export class EdClient {
 
   async getCahierDeTexteDetail(eleveId, date) {
     return this.apiCall(`v3/Eleves/${eleveId}/cahierdetexte/${date}.awp?verbe=get`);
+  }
+
+  async getSchedule(eleveId, dateDebut, dateFin) {
+    return this.apiCall(`v3/E/${eleveId}/emploidutemps.awp?verbe=get`, 'POST', {
+      dateDebut,
+      dateFin,
+      avecTrous: false,
+    });
   }
 }
 

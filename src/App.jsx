@@ -9,6 +9,7 @@ import ThemeMenu from './components/ThemeMenu';
 import LoginForm from './components/LoginForm';
 import LoggedUser from './components/LoggedUser';
 import { useHomeworkPrinter } from './hooks/useHomeworkPrinter';
+import ScheduleView from './components/ScheduleView';
 
 function App() {
   const {
@@ -28,6 +29,12 @@ function App() {
     reopenEleve,
     confirmEleve,
     printDays,
+    scheduleEvents,
+    scheduleBusy,
+    hasMoreSchedule,
+    viewMode,
+    switchView,
+    retrieveSchedule,
     run,
     printHomework,
     afterPrint,
@@ -50,7 +57,7 @@ function App() {
       <div className="container" id="appContainer">
         <div className="app-header">
           {isLoggedIn && <LoggedUser displayName={displayName} username={username} onDisconnect={disconnect} />}
-          <h1>Cahier de Texte</h1>
+          <h1><button type="button" className="title-switch" onClick={switchView}>{viewMode === 'homework' ? 'Cahier de Texte' : 'Emploi du temps'}</button></h1>
           <ThemeMenu />
         </div>
 
@@ -70,11 +77,17 @@ function App() {
           <EleveModal eleveModal={eleveModal} onSelect={selectEleve} onReopen={reopenEleve} />
           {isLoggedIn && (
             <div className="action-status-row">
-              <StatusMessage message={status} isError={statusIsError} />
+              <StatusMessage
+                message={status}
+                isError={statusIsError}
+                emptyMessage={viewMode === 'schedule' ? 'Téléchargez l’emploi du temps.' : 'Téléchargez les devoirs.'}
+              />
               <HomeworkActions
-                onRetrieve={eleveModal && !eleveModal.confirmed ? confirmEleve : run}
+                onRetrieve={viewMode === 'schedule' ? retrieveSchedule : eleveModal && !eleveModal.confirmed ? confirmEleve : run}
                 onPrint={printHomework}
-                canPrint={Boolean(printDays?.length)}
+                canPrint={Boolean(viewMode === 'schedule' ? scheduleEvents.length : printDays?.length)}
+                mode={viewMode}
+                busy={viewMode === 'schedule' ? scheduleBusy : busy && (!eleveModal || eleveModal.confirmed)}
                 compact
               />
             </div>
@@ -84,7 +97,7 @@ function App() {
         {!isLoggedIn && <StatusMessage message={status || 'Pas connecté. Connexion requise.'} isError={statusIsError} />}
       </div>
 
-      <HomeWorkView days={printDays} />
+      {viewMode === 'schedule' ? <ScheduleView events={scheduleEvents} hasMore={hasMoreSchedule} loading={scheduleBusy} onLoadMore={retrieveSchedule} /> : <HomeWorkView days={printDays} />}
     </>
   );
 }
