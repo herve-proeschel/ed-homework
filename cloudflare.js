@@ -68,6 +68,10 @@ function routeInfo(request, url) {
     && url.searchParams.get("verbe") === "get" && isAllowedQuery(url, ["verbe", "v"])) {
     return { kind: "schedule" };
   }
+  if (method === "POST" && /^\/v3\/eleves\/\d+\/notes\.awp$/i.test(path)
+    && url.searchParams.get("verbe") === "get" && isAllowedQuery(url, ["verbe", "v"])) {
+    return { kind: "grades" };
+  }
   return null;
 }
 
