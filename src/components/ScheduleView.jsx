@@ -70,13 +70,13 @@ function ScheduleEvent({ event, lane, laneCount }) {
   return (
     <article
       className={`schedule-event${event.isAnnule ? ' is-cancelled' : ''}`}
-      style={{ '--event-color': color, top: `${position.top}%`, height: `${position.height}%`, left: `calc(${left}% + 22px)`, right: `calc(${right}% + 5px)` }}
+      style={{ '--event-color': color, top: `${position.top}%`, height: `${position.height}%`, left: `calc(${left}% + 5px)`, right: `calc(${right}% + 5px)` }}
     >
       <div className="schedule-time">{start?.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - {end?.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
       <h3>{event.matiere || event.text || 'Cours'}</h3>
       {event.isAnnule && <span className="schedule-cancelled">Annulé</span>}
-      <div>{event.salle?.trim() || 'Salle non indiquée'}</div>
-      {event.prof?.trim() && <div>{event.prof.trim()}</div>}
+      <div className="schedule-room">{event.salle?.trim() || 'Salle non indiquée'}</div>
+      {event.prof?.trim() && <div className="schedule-prof">{event.prof.trim()}</div>}
       {event.groupe?.trim() && <div className="schedule-group">{event.groupe.trim()}</div>}
     </article>
   );
@@ -96,6 +96,7 @@ function ScheduleWeek({ week, firstWeek, todayKey }) {
     <section className="schedule-week">
       <h2>Semaine du {formatWeek(week.start)}</h2>
       <div className="schedule-grid">
+        <div className="schedule-hours schedule-hours--shared" aria-hidden="true">{Array.from({ length: 11 }, (_, hour) => <span className="schedule-hour" key={hour} style={{ top: `${hour * 10}%` }}>{String(hour + 8).padStart(2, '0')}:00</span>)}</div>
         {days.map((day) => {
           const key = dateKey(day);
           const dayEvents = week.events.filter((event) => event.scheduleDateKey === key).sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date));
@@ -110,7 +111,7 @@ function ScheduleWeek({ week, firstWeek, todayKey }) {
           });
           const laneCount = Math.max(1, lanes.length);
           return (
-            <section className="schedule-day" key={key}>
+            <section className="schedule-day" key={key} style={{ '--print-order': day.getDay() || 7 }}>
               <header><strong>{day.toLocaleDateString('fr-FR', { weekday: 'long' })}</strong><span>{day.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span></header>
               <div className="schedule-events">
                 {positioned.length ? positioned.map(({ event, lane }) => <ScheduleEvent key={`${event.id || event.start_date}-${lane}`} event={event} lane={lane} laneCount={laneCount} />) : <div className="schedule-empty">Aucun cours</div>}
@@ -134,7 +135,7 @@ export default function ScheduleView({ events, hasMore, loading, onLoadMore }) {
     return () => observer.disconnect();
   }, [hasMore, loading, onLoadMore]);
 
-  if (!events.length) return <div className="schedule-view-empty">Téléchargez l’emploi du temps.</div>;
+  if (!events.length) return null;
   const weeks = buildWeeks(events);
   const todayKey = dateKey(new Date());
   return (

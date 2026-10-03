@@ -11,8 +11,8 @@
 
   .schedule-week > h2 {
     font-size: 1.15rem;
-    background-color: #0b4e84;
-    color: #fff;
+    background-color: var(--primary);
+    color: var(--primary-contrast);
     padding: 6px 12px;
     border-radius: 4px;
     margin: 0 0 10px;
@@ -20,6 +20,10 @@
 
   .schedule-grid {
     display: block;
+  }
+
+  .schedule-hours {
+    display: none;
   }
 
   .schedule-day {
@@ -32,8 +36,8 @@
     align-items: baseline;
     margin-bottom: 8px;
     padding: 6px 12px;
-    border-bottom: 2px solid #0b4e84;
-    color: #0b4e84;
+    border-bottom: 2px solid var(--primary);
+    color: var(--primary);
   }
 
   .schedule-events {
@@ -46,11 +50,11 @@
     height: auto !important;
     margin-bottom: 8px;
     padding: 8px 12px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border);
     border-left: 5px solid var(--event-color);
     border-radius: 4px;
-    background: #fff;
-    color: #222;
+    background: var(--card);
+    color: var(--text);
   }
 
   .schedule-event h3 {
@@ -59,29 +63,25 @@
   }
 
   .schedule-time {
-    color: #555;
+    color: var(--muted-text);
     font-size: 0.85rem;
   }
 
   .schedule-cancelled {
-    color: #b42318;
+    color: var(--primary-hover);
     font-weight: 700;
   }
 
   .schedule-empty,
   .schedule-view-empty,
   .schedule-load-more {
-    color: #666;
+    color: var(--muted-text);
     font-style: italic;
   }
 
   .schedule-load-more {
     padding: 12px 0 24px;
     text-align: center;
-  }
-
-  .schedule-hours {
-    display: none;
   }
 
   @media (max-width: 480px) {
@@ -96,7 +96,142 @@
 }
 
 @media print {
-  .schedule-hours {
+  @page {
+    size: A4 landscape;
+    margin: 9mm;
+  }
+
+  #scheduleView {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    color: #183248;
+    font-family: "Segoe UI", Arial, sans-serif;
+  }
+
+  .schedule-week {
+    page-break-after: always;
+  }
+
+  .schedule-grid {
+    display: flex;
+    position: relative;
+    min-height: 164mm;
+    border: 1px solid #b8cbd8;
+  }
+
+  .schedule-hours--shared {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
     display: block;
+    width: 22px;
+    z-index: 2;
+  }
+
+  .schedule-day {
+    flex: 1;
+    width: auto;
+    order: var(--print-order);
+    border-right: 1px solid #b8cbd8;
+  }
+
+  .schedule-day:first-of-type {
+    margin-left: 22px;
+  }
+
+  .schedule-day:last-child {
+    border: 0;
+  }
+
+  .schedule-day > header {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 6px;
+    background: #e8f1f6;
+    color: #0b4e84;
+  }
+
+  .schedule-events {
+    position: relative;
+    height: 150mm;
+    overflow: hidden;
+    background: repeating-linear-gradient(to bottom, transparent 0, transparent calc(10% - 1px), #dce7ed calc(10% - 1px), #dce7ed 10%);
+  }
+
+  .schedule-hours {
+    pointer-events: none;
+  }
+
+  .schedule-hour {
+    position: absolute;
+    left: 3px;
+    transform: translateY(-50%);
+    font-size: 7px;
+    line-height: 1;
+    color: #718693;
+    background: #fff;
+    padding-right: 2px;
+  }
+
+  .schedule-hour:first-child {
+    transform: none;
+  }
+
+  .schedule-hour:last-child {
+    transform: translateY(-100%);
+  }
+
+  #scheduleView .schedule-event {
+    position: absolute !important;
+    z-index: 1;
+    overflow: hidden;
+    padding: 4px;
+    border: 1px solid var(--event-color);
+    border-left: 4px solid var(--event-color);
+    border-radius: 0;
+    background: #edf4f8;
+    font-size: 8px;
+  }
+
+  .schedule-event h3 {
+    margin: 2px 0 4px;
+    font-size: 10px;
+  }
+
+  .schedule-time {
+    color: #0b4e84;
+    font-weight: 700;
+  }
+
+  .schedule-group {
+    margin-top: 4px;
+  }
+
+  .schedule-room {
+    display: block;
+  }
+
+  .schedule-time,
+  .schedule-prof {
+    display: none;
+  }
+
+  .schedule-cancelled {
+    color: #a52c2c;
+    font-weight: 700;
+  }
+
+  .schedule-empty {
+    position: relative;
+    z-index: 1;
+    padding: 15px;
+    color: #9aabb6;
+    text-align: center;
+  }
+
+  .schedule-load-more {
+    display: none;
   }
 }

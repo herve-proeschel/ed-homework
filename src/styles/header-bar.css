@@ -19,3 +19,28 @@
 .user-badge:hover {
   background: var(--primary-hover);
 }
+
+.title-switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--subtle-bg);
+  color: var(--primary);
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.title-switch:hover,
+.title-switch:focus-visible {
+  border-color: var(--primary);
+  background: var(--card);
+  color: var(--primary-hover);
+  outline: none;
+}

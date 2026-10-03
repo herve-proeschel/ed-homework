@@ -14,6 +14,7 @@ export function useHomeworkPrinter() {
   const [scheduleEvents, setScheduleEvents] = useState([]);
   const [scheduleBusy, setScheduleBusy] = useState(false);
   const [scheduleWeekCount, setScheduleWeekCount] = useState(0);
+  const [scheduleHasMore, setScheduleHasMore] = useState(true);
 
   const { status, statusIsError, logStatus } = useStatusMessage();
 
@@ -30,6 +31,7 @@ export function useHomeworkPrinter() {
       setPrintDays(cachedDays);
       setScheduleEvents(cachedSchedule);
       setScheduleWeekCount(cachedSchedule.length ? 1 : 0);
+      setScheduleHasMore(true);
       logStatus(cachedDays?.length ? 'Devoirs récupérés, prêts à imprimer.' : '');
     },
     [selectEleveOption, setPrintDays, setScheduleEvents, logStatus],
@@ -86,6 +88,11 @@ export function useHomeworkPrinter() {
     setScheduleBusy(true);
     try {
       const events = await loadScheduleWeek(eleveId, scheduleWeekCount);
+      if (events.length === 0) {
+        setScheduleHasMore(false);
+        logStatus('Aucune semaine supplémentaire trouvée.');
+        return;
+      }
       const merged = new Map((scheduleEventsByEleveRef.current[eleveId] || []).map((event) => [
         `${event.id || ''}-${event.start_date || ''}-${event.end_date || ''}`,
         event,
@@ -259,7 +266,7 @@ export function useHomeworkPrinter() {
     printDays,
     scheduleEvents,
     scheduleBusy,
-    hasMoreSchedule: scheduleWeekCount < 2,
+    hasMoreSchedule: scheduleHasMore,
     viewMode,
     switchView,
     retrieveSchedule,
