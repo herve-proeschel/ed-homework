@@ -7,7 +7,7 @@ const THEME_OPTIONS = [
   { value: 'dark', label: 'Sombre' },
 ];
 const VIEW_OPTIONS = [
-  { value: 'homework', label: 'Devoirs' },
+  { value: 'homework', label: 'Cahier de Texte' },
   { value: 'schedule', label: 'Emploi du temps' },
   { value: 'grades', label: 'Notes' },
 ];
