@@ -86,11 +86,22 @@
     max-width: 720px;
   }
 
+  #appContainer.app-container--logged-in {
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    padding-bottom: 0;
+  }
+
+  #appContainer.app-container--logged-in > .app-topbar {
+    margin-bottom: 0;
+  }
+
   #printView,
   #scheduleView,
   #gradesView {
     max-width: 1100px;
-    margin-top: 24px;
+    margin-top: 16px;
   }
 
   #printView {
@@ -136,7 +147,7 @@
 
   .student-status-toolbar > .eleve-modal:not(.eleve-modal--collapsed) {
     display: grid;
-    grid-template-columns: auto minmax(160px, 1fr) auto;
+    grid-template-columns: auto minmax(160px, 1fr);
     align-items: center;
     gap: 12px;
   }
@@ -149,11 +160,6 @@
     grid-column: 1;
     grid-row: 1;
     white-space: nowrap;
-  }
-
-  .student-status-toolbar > .eleve-modal:not(.eleve-modal--collapsed) .eleve-reopen-btn {
-    grid-column: 3;
-    grid-row: 1;
   }
 
   .student-status-toolbar > .eleve-modal:not(.eleve-modal--collapsed) select {

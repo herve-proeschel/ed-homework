@@ -39,7 +39,7 @@ export function useHomeworkPrinter() {
 
   const { printDays, setPrintDays, buildPrintHtml, printHomework, afterPrint } = usePrintHomework({ logStatus });
 
-  const { eleveModal, setEleveModal, eleveListRef, selectedEleveIdRef, selectEleveOption, reopenEleve, confirmEleve, chooseEleve } =
+  const { eleveModal, setEleveModal, eleveListRef, selectedEleveIdRef, selectEleveOption, confirmEleve, chooseEleve } =
     useEleveSelection({ runRef });
 
   const getDownloadedData = useCallback((eleveId) => {
@@ -390,7 +390,6 @@ export function useHomeworkPrinter() {
     answerQcm,
     eleveModal,
     selectEleve,
-    reopenEleve,
     confirmEleve,
     printDays,
     downloadedDataByEleve,

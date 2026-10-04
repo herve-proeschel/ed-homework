@@ -7,11 +7,7 @@ export function useEleveSelection({ runRef }) {
   const selectedEleveIdRef = useRef(null);
 
   const selectEleveOption = useCallback((id) => {
-    setEleveModal((prev) => (prev ? { ...prev, selectedId: id } : prev));
-  }, []);
-
-  const reopenEleve = useCallback(() => {
-    setEleveModal((prev) => (prev ? { ...prev, confirmed: !prev.confirmed } : prev));
+    setEleveModal((prev) => (prev ? { ...prev, selectedId: id, confirmed: true } : prev));
   }, []);
 
   const confirmEleve = useCallback(() => {
@@ -50,7 +46,6 @@ export function useEleveSelection({ runRef }) {
     eleveListRef,
     selectedEleveIdRef,
     selectEleveOption,
-    reopenEleve,
     confirmEleve,
     chooseEleve,
   };

@@ -33,7 +33,6 @@ function AppContent() {
     answerQcm,
     eleveModal,
     selectEleve,
-    reopenEleve,
     confirmEleve,
     printDays,
     scheduleEvents,
@@ -65,7 +64,7 @@ function AppContent() {
 
   return (
     <>
-      <div className="container" id="appContainer">
+      <div className={`container${isLoggedIn ? ' app-container--logged-in' : ''}`} id="appContainer">
         <div className="app-topbar">
           <AppHeader
             viewMode={viewMode}
@@ -78,7 +77,7 @@ function AppContent() {
           />
 
           <div className={`student-status-toolbar${eleveModal?.confirmed ? ' student-status-toolbar--closed' : ''}`}>
-            <EleveModal eleveModal={eleveModal} onSelect={selectEleve} onReopen={reopenEleve} />
+            <EleveModal eleveModal={eleveModal} onSelect={selectEleve} />
             {isLoggedIn && (
               <div className="action-status-row">
                 <StatusMessage

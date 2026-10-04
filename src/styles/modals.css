@@ -125,27 +125,35 @@
 .eleve-modal--collapsed {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
 }
 
-.eleve-reopen-btn {
-  padding: 0 16px;
-  height: 32px;
-  border: 1px solid var(--border);
+.eleve-modal select.eleve-selected-name {
+  width: auto;
+  height: auto;
+  min-width: 0;
+  margin: 0;
+  padding: 4px 24px 4px 8px;
+  border: 0;
   border-radius: 8px;
   background: transparent;
   color: var(--text);
-  cursor: pointer;
   font: inherit;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
 }
 
-.eleve-reopen-btn:hover,
-.eleve-reopen-btn:focus-visible {
+.eleve-modal select.eleve-selected-name:hover,
+.eleve-modal select.eleve-selected-name:focus-visible {
   background: var(--state-hover);
   outline: none;
+}
+
+.eleve-modal select.eleve-selected-name:focus-visible {
+  box-shadow: 0 0 0 2px var(--primary);
 }
 
 .eleve-modal select {
@@ -163,7 +171,12 @@
   margin-bottom: 10px;
 }
 
-.eleve-modal select:focus {
+.eleve-modal select option {
+  background: var(--input-bg);
+  color: var(--text);
+}
+
+.eleve-modal select:not(.eleve-selected-name):focus {
   border-color: var(--primary);
   box-shadow: inset 0 0 0 1px var(--primary);
   outline: none;
