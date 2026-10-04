@@ -5,15 +5,13 @@ import QcmModal from './components/QcmModal';
 import EleveModal from './components/EleveModal';
 import HomeWorkView from './components/HomeWorkView';
 import PrintAction from './components/PrintAction';
-import ThemeMenu from './components/ThemeMenu';
+import AppHeader from './components/AppHeader';
 import LoginForm from './components/LoginForm';
-import LoggedUser from './components/LoggedUser';
 import { AppProvider } from './context/AppProvider';
 import { useAppContext } from './context/appContext';
 import ScheduleView from './components/ScheduleView';
 import GradesView from './components/GradesView';
 
-const VIEW_TITLES = { homework: 'Cahier de Texte', schedule: 'Emploi du temps', grades: 'Notes' };
 const VIEW_EMPTY_MESSAGES = {
   homework: 'Téléchargez les devoirs.',
   schedule: 'Téléchargez l’emploi du temps.',
@@ -68,10 +66,38 @@ function AppContent() {
   return (
     <>
       <div className="container" id="appContainer">
-        <div className="app-header">
-          <ThemeMenu viewMode={viewMode} onSelectView={selectView} />
-          <h1><button type="button" className="title-switch" onClick={switchView}>{VIEW_TITLES[viewMode]}</button></h1>
-          {isLoggedIn && <LoggedUser displayName={displayName} username={username} onDisconnect={disconnect} />}
+        <div className="app-topbar">
+          <AppHeader
+            viewMode={viewMode}
+            onSelectView={selectView}
+            onSwitchView={switchView}
+            isLoggedIn={isLoggedIn}
+            displayName={displayName}
+            username={username}
+            onDisconnect={disconnect}
+          />
+
+          <div className={`student-status-toolbar${eleveModal?.confirmed ? ' student-status-toolbar--closed' : ''}`}>
+            <EleveModal eleveModal={eleveModal} onSelect={selectEleve} onReopen={reopenEleve} />
+            {isLoggedIn && (
+              <div className="action-status-row">
+                <StatusMessage
+                  message={status}
+                  isError={statusIsError}
+                  emptyMessage={VIEW_EMPTY_MESSAGES[viewMode]}
+                />
+                <PrintAction
+                  onRetrieve={viewMode === 'schedule' ? retrieveSchedule : viewMode === 'grades' ? retrieveGrades : eleveModal && !eleveModal.confirmed ? confirmEleve : run}
+                  onPrint={printHomework}
+                  canPrint={viewMode === 'grades' ? false : Boolean(viewMode === 'schedule' ? scheduleEvents.length : printDays?.length)}
+                  hasData={viewMode === 'grades' && Boolean(grades)}
+                  mode={viewMode}
+                  busy={viewMode === 'schedule' ? scheduleBusy : viewMode === 'grades' ? gradesBusy : busy && (!eleveModal || eleveModal.confirmed)}
+                  compact
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {!isLoggedIn && (
@@ -86,27 +112,6 @@ function AppContent() {
         )}
 
         <QcmModal qcm={qcm} onAnswer={answerQcm} />
-        <div className={`student-status-toolbar${eleveModal?.confirmed ? ' student-status-toolbar--closed' : ''}`}>
-          <EleveModal eleveModal={eleveModal} onSelect={selectEleve} onReopen={reopenEleve} />
-          {isLoggedIn && (
-            <div className="action-status-row">
-              <StatusMessage
-                message={status}
-                isError={statusIsError}
-                emptyMessage={VIEW_EMPTY_MESSAGES[viewMode]}
-              />
-              <PrintAction
-                onRetrieve={viewMode === 'schedule' ? retrieveSchedule : viewMode === 'grades' ? retrieveGrades : eleveModal && !eleveModal.confirmed ? confirmEleve : run}
-                onPrint={printHomework}
-                canPrint={viewMode === 'grades' ? false : Boolean(viewMode === 'schedule' ? scheduleEvents.length : printDays?.length)}
-                hasData={viewMode === 'grades' && Boolean(grades)}
-                mode={viewMode}
-                busy={viewMode === 'schedule' ? scheduleBusy : viewMode === 'grades' ? gradesBusy : busy && (!eleveModal || eleveModal.confirmed)}
-                compact
-              />
-            </div>
-          )}
-        </div>
 
         {!isLoggedIn && <StatusMessage message={status || 'Pas connecté. Connexion requise.'} isError={statusIsError} />}
       </div>
