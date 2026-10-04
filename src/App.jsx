@@ -8,7 +8,8 @@ import PrintAction from './components/PrintAction';
 import ThemeMenu from './components/ThemeMenu';
 import LoginForm from './components/LoginForm';
 import LoggedUser from './components/LoggedUser';
-import { useHomeworkPrinter } from './hooks/useHomeworkPrinter';
+import { AppProvider } from './context/AppProvider';
+import { useAppContext } from './context/appContext';
 import ScheduleView from './components/ScheduleView';
 import GradesView from './components/GradesView';
 
@@ -19,7 +20,7 @@ const VIEW_EMPTY_MESSAGES = {
   grades: 'Téléchargez les notes.',
 };
 
-function App() {
+function AppContent() {
   const {
     username,
     setUsername,
@@ -52,7 +53,7 @@ function App() {
     afterPrint,
     disconnect,
     restoreFromStorage,
-  } = useHomeworkPrinter();
+  } = useAppContext();
 
   useEffect(() => {
     restoreFromStorage();
@@ -114,6 +115,14 @@ function App() {
       {viewMode === 'grades' && <GradesView grades={grades} />}
       {viewMode === 'homework' && <HomeWorkView days={printDays} />}
     </>
+  );
+}
+
+function App() {
+  return (
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
   );
 }
 

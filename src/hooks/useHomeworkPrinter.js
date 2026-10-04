@@ -12,17 +12,26 @@ const VIEW_STATUS_MESSAGES = {
   grades: 'Téléchargez les notes.',
 };
 
+function createDownloadedData() {
+  return {
+    homework: null,
+    schedule: [],
+    grades: null,
+    scheduleWeekCount: 0,
+    scheduleHasMore: true,
+  };
+}
+
 export function useHomeworkPrinter() {
   const runRef = useRef(null);
-  const downloadedDaysByEleveRef = useRef({});
-  const scheduleEventsByEleveRef = useRef({});
+  const [downloadedDataByEleve, setDownloadedDataByEleve] = useState({});
+  const downloadedDataByEleveRef = useRef(downloadedDataByEleve);
   const autoDownloadKeyRef = useRef('');
   const [viewMode, setViewMode] = useState('homework');
   const [scheduleEvents, setScheduleEvents] = useState([]);
   const [scheduleBusy, setScheduleBusy] = useState(false);
   const [scheduleWeekCount, setScheduleWeekCount] = useState(0);
   const [scheduleHasMore, setScheduleHasMore] = useState(true);
-  const gradesByEleveRef = useRef({});
   const [grades, setGrades] = useState(null);
   const [gradesBusy, setGradesBusy] = useState(false);
 
@@ -33,26 +42,48 @@ export function useHomeworkPrinter() {
   const { eleveModal, setEleveModal, eleveListRef, selectedEleveIdRef, selectEleveOption, reopenEleve, confirmEleve, chooseEleve } =
     useEleveSelection({ runRef });
 
+  const getDownloadedData = useCallback((eleveId) => {
+    return downloadedDataByEleveRef.current[String(eleveId)] || null;
+  }, []);
+
+  const updateDownloadedData = useCallback((eleveId, update) => {
+    const key = String(eleveId);
+    const previous = downloadedDataByEleveRef.current[key] || createDownloadedData();
+    const nextEntry = update(previous);
+    const nextDictionary = { ...downloadedDataByEleveRef.current, [key]: nextEntry };
+    downloadedDataByEleveRef.current = nextDictionary;
+    setDownloadedDataByEleve(nextDictionary);
+    return nextEntry;
+  }, []);
+
   const selectEleve = useCallback(
     (id) => {
+      const selectedId = String(id);
+      selectedEleveIdRef.current = selectedId;
       selectEleveOption(id);
-      const cachedDays = downloadedDaysByEleveRef.current[id] || null;
-      const cachedSchedule = scheduleEventsByEleveRef.current[id] || [];
+      autoDownloadKeyRef.current = '';
+      const cachedData = getDownloadedData(selectedId);
+      const cachedDays = cachedData?.homework ?? null;
+      const cachedSchedule = cachedData?.schedule ?? [];
       setPrintDays(cachedDays);
       setScheduleEvents(cachedSchedule);
-      setScheduleWeekCount(cachedSchedule.length ? 1 : 0);
-      setScheduleHasMore(true);
-      setGrades(gradesByEleveRef.current[id] || null);
+      setScheduleWeekCount(cachedData?.scheduleWeekCount ?? (cachedSchedule.length ? 1 : 0));
+      setScheduleHasMore(cachedData?.scheduleHasMore ?? true);
+      setGrades(cachedData?.grades ?? null);
       logStatus(cachedDays?.length ? 'Devoirs récupérés, prêts à imprimer.' : '');
     },
-    [selectEleveOption, setPrintDays, setScheduleEvents, logStatus],
+    [getDownloadedData, selectEleveOption, setPrintDays, setScheduleEvents, logStatus, selectedEleveIdRef],
   );
 
-  const resetScheduleAndGrades = useCallback((events) => {
+  const resetDownloadedData = useCallback((events) => {
     setScheduleEvents(events);
+    setScheduleWeekCount(0);
+    setScheduleHasMore(true);
     setGrades(null);
-    gradesByEleveRef.current = {};
-  }, []);
+    const emptyDictionary = {};
+    downloadedDataByEleveRef.current = emptyDictionary;
+    setDownloadedDataByEleve(emptyDictionary);
+  }, [setScheduleEvents]);
 
   const {
     clientRef,
@@ -73,7 +104,7 @@ export function useHomeworkPrinter() {
     persistSession,
     handleSessionExpired,
     disconnect,
-  } = useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents: resetScheduleAndGrades });
+  } = useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents: resetDownloadedData });
 
   const dateKey = (date) => date.toISOString().split('T')[0];
   const startOfWeek = (date) => {
@@ -102,32 +133,43 @@ export function useHomeworkPrinter() {
   const retrieveSchedule = useCallback(async () => {
     const eleveId = selectedEleveIdRef.current;
     if (!eleveId || scheduleBusy) return;
+    const weekOffset = scheduleWeekCount;
     setScheduleBusy(true);
-    logStatus(scheduleWeekCount ? 'Téléchargement de la semaine suivante...' : 'Téléchargement de l’emploi du temps...');
+    logStatus(weekOffset ? 'Téléchargement de la semaine suivante...' : 'Téléchargement de l’emploi du temps...');
     try {
-      const events = await loadScheduleWeek(eleveId, scheduleWeekCount);
+      const events = await loadScheduleWeek(eleveId, weekOffset);
       if (events.length === 0) {
+        updateDownloadedData(eleveId, (previous) => ({ ...previous, scheduleHasMore: false }));
         setScheduleHasMore(false);
         logStatus('Aucune semaine supplémentaire trouvée.');
         return;
       }
-      const merged = new Map((scheduleEventsByEleveRef.current[eleveId] || []).map((event) => [
+      const cachedSchedule = getDownloadedData(eleveId)?.schedule || [];
+      const merged = new Map(cachedSchedule.map((event) => [
         `${event.id || ''}-${event.start_date || ''}-${event.end_date || ''}`,
         event,
       ]));
       events.forEach((event) => merged.set(`${event.id || ''}-${event.start_date || ''}-${event.end_date || ''}`, event));
       const nextEvents = [...merged.values()];
-      scheduleEventsByEleveRef.current[eleveId] = nextEvents;
-      setScheduleEvents(nextEvents);
-      setScheduleWeekCount((count) => count + 1);
-      logStatus(scheduleWeekCount ? 'Semaine suivante téléchargée.' : 'Emploi du temps téléchargé.');
+      updateDownloadedData(eleveId, (previous) => ({
+        ...previous,
+        schedule: nextEvents,
+        scheduleWeekCount: weekOffset + 1,
+        scheduleHasMore: true,
+      }));
+      if (String(selectedEleveIdRef.current) === String(eleveId)) {
+        setScheduleEvents(nextEvents);
+        setScheduleWeekCount(weekOffset + 1);
+        setScheduleHasMore(true);
+      }
+      logStatus(weekOffset ? 'Semaine suivante téléchargée.' : 'Emploi du temps téléchargé.');
     } catch (error) {
       if (isSessionExpiredError({ message: error.message })) handleSessionExpired();
       else logStatus(`Erreur : ${error.message}`, true);
     } finally {
       setScheduleBusy(false);
     }
-  }, [handleSessionExpired, loadScheduleWeek, logStatus, scheduleBusy, scheduleWeekCount, selectedEleveIdRef]);
+  }, [getDownloadedData, handleSessionExpired, loadScheduleWeek, logStatus, scheduleBusy, scheduleWeekCount, selectedEleveIdRef, updateDownloadedData]);
 
   const retrieveGrades = useCallback(async () => {
     const eleveId = selectedEleveIdRef.current;
@@ -147,8 +189,10 @@ export function useHomeworkPrinter() {
         periodes: Array.isArray(response.data.periodes) ? response.data.periodes : [],
         notes: Array.isArray(response.data.notes) ? response.data.notes : [],
       };
-      gradesByEleveRef.current[eleveId] = data;
-      setGrades(data);
+      updateDownloadedData(eleveId, (previous) => ({ ...previous, grades: data }));
+      if (String(selectedEleveIdRef.current) === String(eleveId)) {
+        setGrades(data);
+      }
       logStatus('Notes téléchargées.');
     } catch (error) {
       if (isSessionExpiredError({ message: error.message })) handleSessionExpired();
@@ -156,7 +200,7 @@ export function useHomeworkPrinter() {
     } finally {
       setGradesBusy(false);
     }
-  }, [clientRef, gradesBusy, handleSessionExpired, logStatus, selectedEleveIdRef]);
+  }, [clientRef, gradesBusy, handleSessionExpired, logStatus, selectedEleveIdRef, updateDownloadedData]);
 
   const selectView = useCallback((mode) => {
     setViewMode(mode);
@@ -234,8 +278,12 @@ export function useHomeworkPrinter() {
       const futureDates = Object.keys(listRes.data).filter((d) => d > todayStr).sort();
 
       if (futureDates.length === 0) {
+        updateDownloadedData(eleveId, (previous) => ({ ...previous, homework: [] }));
         logStatus('Aucun devoir programmé pour les jours suivants.');
         persistSession();
+        if (String(selectedEleveIdRef.current) === String(eleveId)) {
+          setPrintDays([]);
+        }
         setBusy(false);
         return;
       }
@@ -269,8 +317,10 @@ export function useHomeworkPrinter() {
 
       persistSession();
       logStatus('Devoirs récupérés, prêts à imprimer.');
-      downloadedDaysByEleveRef.current[eleveId] = detailedDays;
-      setPrintDays(detailedDays);
+      updateDownloadedData(eleveId, (previous) => ({ ...previous, homework: detailedDays }));
+      if (String(selectedEleveIdRef.current) === String(eleveId)) {
+        setPrintDays(detailedDays);
+      }
       setBusy(false);
     } catch (err) {
       console.error(err);
@@ -296,6 +346,7 @@ export function useHomeworkPrinter() {
     setPrintDays,
     setDisplayName,
     setIsLoggedIn,
+    updateDownloadedData,
     viewMode,
     retrieveSchedule,
     retrieveGrades,
@@ -309,8 +360,10 @@ export function useHomeworkPrinter() {
     const selectedEleveId = selectedEleveIdRef.current;
     if (!isLoggedIn || !selectedEleveId || busy || scheduleBusy || gradesBusy) return undefined;
     const autoDownloadKey = `${selectedEleveId}:${viewMode}`;
+    const cachedData = getDownloadedData(selectedEleveId);
     if (autoDownloadKeyRef.current === autoDownloadKey) return undefined;
     if (viewMode === 'schedule' && scheduleEvents.length) return undefined;
+    if (viewMode === 'schedule' && cachedData?.scheduleHasMore === false) return undefined;
     if (viewMode === 'grades' && grades) return undefined;
     if (viewMode === 'homework' && printDays) return undefined;
 
@@ -321,7 +374,7 @@ export function useHomeworkPrinter() {
       else run();
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [busy, grades, gradesBusy, isLoggedIn, printDays, retrieveGrades, retrieveSchedule, run, scheduleBusy, scheduleEvents.length, selectedEleveIdRef, viewMode]);
+  }, [busy, downloadedDataByEleve, getDownloadedData, grades, gradesBusy, isLoggedIn, eleveModal?.selectedId, printDays, retrieveGrades, retrieveSchedule, run, scheduleBusy, scheduleEvents.length, selectedEleveIdRef, viewMode]);
 
   return {
     username,
@@ -340,6 +393,7 @@ export function useHomeworkPrinter() {
     reopenEleve,
     confirmEleve,
     printDays,
+    downloadedDataByEleve,
     scheduleEvents,
     scheduleBusy,
     hasMoreSchedule: scheduleHasMore,

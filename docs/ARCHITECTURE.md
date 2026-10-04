@@ -28,6 +28,7 @@ flowchart LR
 | Composant | Responsabilite actuelle |
 | --- | --- |
 | SPA React | Afficher la connexion, le parcours MFA, la selection d'un eleve, les devoirs et l'impression. |
+| Contexte React de l'application | Exposer l'eleve selectionne et le dictionnaire des donnees telechargees par eleve a tous les composants descendants. |
 | `EdClient` | Maintenir les tokens et cookies necessaires, construire les requetes EcoleDirecte et decoder les reponses. |
 | `sessionStorage` | Conserver la session active, le profil selectionne, la liste des eleves et le nom affiche. |
 | `localStorage` | Conserver l'identifiant saisi et la validation FA retournee par le parcours 2FA. |
@@ -73,7 +74,7 @@ sequenceDiagram
 
 ### 3.2 Selection et recuperation des devoirs
 
-Apres la connexion, les profils eleves sont extraits de la reponse du compte. `useEleveSelection` affiche `EleveModal` et conserve l'identifiant choisi. L'application appelle ensuite, pour les dates futures uniquement :
+Apres la connexion, les profils eleves sont extraits de la reponse du compte. `useEleveSelection` affiche `EleveModal` et conserve l'identifiant choisi. `AppProvider` expose ensuite `selectedEleve`, `selectedEleveId`, `downloadedData` et `downloadedDataByEleve` via `useAppContext`; ce dernier dictionnaire est indexe par identifiant d'eleve et conserve les devoirs, l'emploi du temps, les notes et la pagination de l'emploi du temps de chaque eleve. La page courante (`viewMode`) reste partagee pendant un changement d'eleve : si l'utilisateur consulte l'emploi du temps, il reste sur l'emploi du temps avec les donnees du nouvel eleve. Tous les composants descendants peuvent ainsi lire ces donnees sans prop drilling. L'application appelle ensuite, pour les dates futures uniquement :
 
 ```text
 POST /v3/Eleves/{eleveId}/cahierdetexte.awp?verbe=get
