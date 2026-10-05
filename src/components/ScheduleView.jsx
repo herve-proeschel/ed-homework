@@ -73,9 +73,9 @@ function ScheduleEvent({ event, lane, laneCount }) {
       style={{ '--event-color': color, top: `${position.top}%`, height: `${position.height}%`, left: `calc(${left}% + 5px)`, right: `calc(${right}% + 5px)` }}
     >
       <div className="schedule-time">{start?.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - {end?.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
-      <h3>{event.matiere || event.text || 'Cours'}</h3>
+      <h3>{ event.text || event.matiere || 'Cours'}</h3>
       {event.isAnnule && <span className="schedule-cancelled">Annulé</span>}
-      <div className="schedule-room">{event.salle?.trim() || 'Salle non indiquée'}</div>
+      <div className="schedule-room">{event.salle?.trim() || ''}</div>
       {event.prof?.trim() && <div className="schedule-prof">{event.prof.trim()}</div>}
       {event.groupe?.trim() && <div className="schedule-group">{event.groupe.trim()}</div>}
     </article>
