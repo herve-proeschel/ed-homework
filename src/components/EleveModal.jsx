@@ -1,40 +1,42 @@
-export default function EleveModal({ eleveModal, onSelect }) {
-  if (!eleveModal) return null;
-  const { eleves, selectedId, confirmed } = eleveModal;
-  const selectedEleve = eleves.find((eleve) => String(eleve.id) === String(selectedId));
-  const selectedName = `${selectedEleve?.prenom || ''} ${selectedEleve?.nom || ''}`.trim();
-  const options = eleves.map((eleve) => (
-    <option key={eleve.id} value={eleve.id}>
-      {`${eleve.prenom || ''} ${eleve.nom || ''}`.trim()}
-    </option>
-  ));
+function StudentIcon() {
+  return (
+    <svg className="theme-option-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M4.5 20c.8-3.4 3.3-5 7.5-5s6.7 1.6 7.5 5" />
+    </svg>
+  );
+}
 
-  if (confirmed) {
-    return (
-      <div className="eleve-modal eleve-modal--collapsed">
-        <select
-          className="eleve-selected-name"
-          value={selectedId}
-          onChange={(e) => onSelect(e.target.value)}
-          title="Changer d'élève"
-          aria-label={`Élève sélectionné : ${selectedName}. Ouvrir la liste des élèves`}
-        >
-          {options}
-        </select>
-      </div>
-    );
-  }
+export default function EleveModal({ eleveModal, onSelect, menuItemRefs, itemOffset = 0 }) {
+  if (!eleveModal) return null;
+  const { eleves, selectedId } = eleveModal;
 
   return (
-    <div className="eleve-modal">
-      <div className="eleve-modal-header">
-        <p>
-          <strong>Choisissez un élève :</strong>
-        </p>
-      </div>
-      <select value={selectedId} onChange={(e) => onSelect(e.target.value)}>
-        {options}
-      </select>
+    <div className="eleve-modal eleve-modal--list" aria-label="Élèves disponibles">
+      {eleves.map((eleve, index) => {
+        const id = String(eleve.id);
+        const name = `${eleve.prenom || ''} ${eleve.nom || ''}`.trim() || 'Élève';
+        const isSelected = id === String(selectedId);
+        return (
+          <button
+            type="button"
+            role="menuitemradio"
+            className="theme-option eleve-option"
+            key={eleve.id}
+            aria-checked={isSelected}
+            ref={(element) => {
+              if (menuItemRefs) menuItemRefs.current[itemOffset + index] = element;
+            }}
+            onClick={() => onSelect(id)}
+          >
+            <span className="theme-option-label">
+              <StudentIcon />
+              <span>{name}</span>
+            </span>
+            {isSelected && <span className="theme-option-check" aria-hidden="true">✓</span>}
+          </button>
+        );
+      })}
     </div>
   );
 }

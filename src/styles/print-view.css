@@ -14,6 +14,19 @@
     padding: 0 !important;
   }
 
+  .app-shell {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .app-topbar {
+    display: none !important;
+  }
+
+  .app-floating-actions {
+    display: none !important;
+  }
+
   #printView {
     display: block !important;
     width: 100% !important;

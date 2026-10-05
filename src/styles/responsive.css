@@ -77,6 +77,14 @@
     font-size: 0.875rem;
   }
 }
+
+#appContainer.app-container--logged-in {
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 @media screen and (min-width: 768px) {
   #root {
     padding: 16px 32px 32px;
@@ -91,10 +99,6 @@
     border-radius: 0;
     box-shadow: none;
     padding-bottom: 0;
-  }
-
-  #appContainer.app-container--logged-in > .app-topbar {
-    margin-bottom: 0;
   }
 
   #printView,
@@ -235,6 +239,30 @@
     display: none;
   }
 
+  #scheduleView .schedule-room {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  #scheduleView .schedule-room-full,
+  #scheduleView .schedule-room-short {
+    display: block;
+  }
+
+  #scheduleView .schedule-room--compact,
+  #scheduleView .schedule-room--short {
+    font-size: 50%;
+  }
+
+  #scheduleView .schedule-room--short .schedule-room-full {
+    display: none;
+  }
+
+  #scheduleView .schedule-room--short .schedule-room-short {
+    display: block;
+  }
+
   .grades-periods {
     flex-wrap: wrap;
     overflow-x: visible;
@@ -246,44 +274,6 @@
     flex-wrap: nowrap;
     gap: 16px;
     margin-top: 16px;
-  }
-
-  .student-status-toolbar > .eleve-modal {
-    flex: 0 1 auto;
-    min-width: 0;
-    margin-top: 0;
-  }
-
-  .student-status-toolbar > .eleve-modal:not(.eleve-modal--collapsed) {
-    display: grid;
-    grid-template-columns: auto minmax(160px, 1fr);
-    align-items: center;
-    gap: 12px;
-  }
-
-  .student-status-toolbar > .eleve-modal:not(.eleve-modal--collapsed) .eleve-modal-header {
-    display: contents;
-  }
-
-  .student-status-toolbar > .eleve-modal:not(.eleve-modal--collapsed) .eleve-modal-header p {
-    grid-column: 1;
-    grid-row: 1;
-    white-space: nowrap;
-  }
-
-  .student-status-toolbar > .eleve-modal:not(.eleve-modal--collapsed) select {
-    grid-column: 2;
-    grid-row: 1;
-    width: 100%;
-    height: 48px;
-    margin: 0;
-  }
-
-  .student-status-toolbar > .eleve-modal--collapsed {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    white-space: nowrap;
   }
 
   .student-status-toolbar > .action-status-row {
@@ -303,6 +293,16 @@
   #gradesView > .grades-empty,
   #gradesView > .grades-subject--general {
     grid-column: 1 / -1;
+  }
+}
+
+@media screen and (max-width: 1199px) {
+  .student-status-toolbar > .action-status-row {
+    display: none;
+  }
+
+  .student-status-toolbar > .action-status-row > .status {
+    display: none;
   }
 }
 

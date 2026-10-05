@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import EleveModal from './EleveModal';
+
 const THEME_KEY = 'ed_theme';
 const THEME_OPTIONS = [
   { value: 'system', label: 'Système', icon: 'system' },
@@ -38,7 +40,7 @@ function getSystemTheme() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-export default function ThemeMenu({ viewMode, onSelectView }) {
+export default function ThemeMenu({ viewMode, onSelectView, title, eleveModal, onSelectEleve }) {
   const [theme, setTheme] = useState(getStoredTheme);
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
@@ -116,6 +118,9 @@ export default function ThemeMenu({ viewMode, onSelectView }) {
     closeMenu(true);
   };
 
+  const hasMultipleEleves = (eleveModal?.eleves?.length || 0) > 1;
+  const eleveCount = hasMultipleEleves ? eleveModal.eleves.length : 0;
+
   return (
     <div className="theme-menu" ref={menuRef}>
       <button
@@ -145,7 +150,20 @@ export default function ThemeMenu({ viewMode, onSelectView }) {
           aria-label="Menu principal"
           onKeyDown={handleMenuKeyDown}
         >
-          <p className="theme-menu-drawer-title">Cahier de Texte</p>
+          <p className="theme-menu-drawer-title">{title}</p>
+          {hasMultipleEleves && (
+            <>
+              <section className="theme-menu-student" aria-labelledby="theme-menu-student-title">
+                <p className="theme-menu-section-title" id="theme-menu-student-title">Élève</p>
+                <EleveModal
+                  eleveModal={eleveModal}
+                  onSelect={onSelectEleve}
+                  menuItemRefs={menuItemRefs}
+                />
+              </section>
+              <div className="theme-menu-divider" />
+            </>
+          )}
           <p className="theme-menu-section-title">Navigation</p>
           {VIEW_OPTIONS.map((option, index) => (
             <button
@@ -154,7 +172,7 @@ export default function ThemeMenu({ viewMode, onSelectView }) {
               aria-current={viewMode === option.value ? 'page' : undefined}
               className="theme-option"
               key={option.value}
-              ref={(element) => { menuItemRefs.current[index] = element; }}
+              ref={(element) => { menuItemRefs.current[eleveCount + index] = element; }}
               onClick={() => {
                 onSelectView(option.value);
                 closeMenu(true);
@@ -176,7 +194,7 @@ export default function ThemeMenu({ viewMode, onSelectView }) {
               aria-checked={theme === option.value}
               className="theme-option"
               key={option.value}
-              ref={(element) => { menuItemRefs.current[VIEW_OPTIONS.length + index] = element; }}
+              ref={(element) => { menuItemRefs.current[eleveCount + VIEW_OPTIONS.length + index] = element; }}
               onClick={() => selectTheme(option.value)}
             >
               <span className="theme-option-label">

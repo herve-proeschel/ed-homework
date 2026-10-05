@@ -72,6 +72,28 @@
   line-height: 1.3;
 }
 
+.theme-menu-student {
+  padding-bottom: 8px;
+}
+
+.theme-menu-student .theme-menu-section-title {
+  margin-right: 24px;
+  margin-left: 24px;
+}
+
+.theme-menu-student .eleve-modal {
+  margin-top: 0;
+}
+
+.theme-menu-student .eleve-modal--list {
+  display: flex;
+  flex-direction: column;
+}
+
+.theme-menu-student .eleve-option[aria-checked='true'] {
+  background: var(--menu-active);
+}
+
 @keyframes drawer-in {
   from { transform: translateX(-100%); }
 }

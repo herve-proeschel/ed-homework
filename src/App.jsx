@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import './App.css';
 import StatusMessage from './components/StatusMessage';
 import QcmModal from './components/QcmModal';
-import EleveModal from './components/EleveModal';
 import HomeWorkView from './components/HomeWorkView';
 import PrintAction from './components/PrintAction';
 import AppHeader from './components/AppHeader';
@@ -26,6 +25,7 @@ function AppContent() {
     password,
     setPassword,
     isLoggedIn,
+    selectedEleve,
     busy,
     status,
     statusIsError,
@@ -63,9 +63,8 @@ function AppContent() {
   }, [afterPrint]);
 
   return (
-    <>
-      <div className={`container${isLoggedIn ? ' app-container--logged-in' : ''}`} id="appContainer">
-        <div className="app-topbar">
+    <div className="app-shell">
+      <div className="app-topbar">
           <AppHeader
             viewMode={viewMode}
             onSelectView={selectView}
@@ -73,11 +72,13 @@ function AppContent() {
             isLoggedIn={isLoggedIn}
             displayName={displayName}
             username={username}
+            selectedEleve={selectedEleve}
+            eleveModal={eleveModal}
+            onSelectEleve={selectEleve}
             onDisconnect={disconnect}
           />
 
           <div className={`student-status-toolbar${eleveModal?.confirmed ? ' student-status-toolbar--closed' : ''}`}>
-            <EleveModal eleveModal={eleveModal} onSelect={selectEleve} />
             {isLoggedIn && (
               <div className="action-status-row">
                 <StatusMessage
@@ -85,20 +86,26 @@ function AppContent() {
                   isError={statusIsError}
                   emptyMessage={VIEW_EMPTY_MESSAGES[viewMode]}
                 />
-                <PrintAction
-                  onRetrieve={viewMode === 'schedule' ? retrieveSchedule : viewMode === 'grades' ? retrieveGrades : eleveModal && !eleveModal.confirmed ? confirmEleve : run}
-                  onPrint={printHomework}
-                  canPrint={viewMode === 'grades' ? false : Boolean(viewMode === 'schedule' ? scheduleEvents.length : printDays?.length)}
-                  hasData={viewMode === 'grades' && Boolean(grades)}
-                  mode={viewMode}
-                  busy={viewMode === 'schedule' ? scheduleBusy : viewMode === 'grades' ? gradesBusy : busy && (!eleveModal || eleveModal.confirmed)}
-                  compact
-                />
               </div>
             )}
           </div>
         </div>
 
+      {isLoggedIn && (
+        <div className="app-floating-actions">
+          <PrintAction
+            onRetrieve={viewMode === 'schedule' ? retrieveSchedule : viewMode === 'grades' ? retrieveGrades : eleveModal && !eleveModal.confirmed ? confirmEleve : run}
+            onPrint={printHomework}
+            canPrint={viewMode === 'grades' ? false : Boolean(viewMode === 'schedule' ? scheduleEvents.length : printDays?.length)}
+            hasData={viewMode === 'grades' && Boolean(grades)}
+            mode={viewMode}
+            busy={viewMode === 'schedule' ? scheduleBusy : viewMode === 'grades' ? gradesBusy : busy && (!eleveModal || eleveModal.confirmed)}
+            compact
+          />
+        </div>
+      )}
+
+      <div className={`container${isLoggedIn ? ' app-container--logged-in' : ''}`} id="appContainer">
         {!isLoggedIn && (
           <LoginForm
             username={username}
@@ -118,7 +125,7 @@ function AppContent() {
       {viewMode === 'schedule' && <ScheduleView events={scheduleEvents} hasMore={hasMoreSchedule} loading={scheduleBusy} onLoadMore={retrieveSchedule} />}
       {viewMode === 'grades' && <GradesView grades={grades} />}
       {viewMode === 'homework' && <HomeWorkView days={printDays} />}
-    </>
+    </div>
   );
 }
 

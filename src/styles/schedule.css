@@ -44,6 +44,10 @@
     display: block;
   }
 
+  .schedule-room-short {
+    display: none;
+  }
+
   #scheduleView .schedule-event {
     position: static;
     display: block;
@@ -239,6 +243,14 @@
 
   .schedule-room {
     display: block;
+  }
+
+  .schedule-room-full {
+    display: block;
+  }
+
+  .schedule-room-short {
+    display: none;
   }
 
   .schedule-time,

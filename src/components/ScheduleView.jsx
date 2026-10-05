@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 function parseDate(value) {
   const raw = String(value || '').trim();
@@ -59,6 +59,76 @@ function buildWeeks(events) {
   return [...weeks.values()];
 }
 
+function getShortRoomName(room) {
+  const match = room.match(/\bsalle\s+[^,\s;()]+/i);
+  return match ? match[0] : room;
+}
+
+function getInitialLargeScreenState() {
+  return typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(min-width: 768px)').matches;
+}
+
+function ScheduleRoom({ room }) {
+  const roomName = String(room || '').trim();
+  const roomRef = useRef(null);
+  const [isLargeScreen, setIsLargeScreen] = useState(getInitialLargeScreenState);
+  const [displayState, setDisplayState] = useState(() => ({
+    roomName,
+    mode: getInitialLargeScreenState() ? 'compact' : 'normal',
+  }));
+  const displayMode = isLargeScreen
+    ? displayState.roomName === roomName && displayState.mode !== 'normal' ? displayState.mode : 'compact'
+    : 'normal';
+  const shortRoomName = getShortRoomName(roomName);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
+    const mediaQuery = window.matchMedia('(min-width: 768px)');
+    const handleChange = () => {
+      setIsLargeScreen(mediaQuery.matches);
+      setDisplayState({ roomName, mode: mediaQuery.matches ? 'compact' : 'normal' });
+    };
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
+  }, [roomName]);
+
+  useEffect(() => {
+    if (!isLargeScreen) return undefined;
+    const element = roomRef.current;
+    if (!element || !roomName) return undefined;
+    const checkOverflow = () => {
+      if (element.scrollWidth <= element.clientWidth + 1) return;
+      setDisplayState((current) => {
+        const mode = current.roomName === roomName && current.mode !== 'normal' ? current.mode : 'compact';
+        if (mode === 'compact') return { roomName, mode: 'short' };
+        return current;
+      });
+    };
+    checkOverflow();
+    if (typeof ResizeObserver === 'function') {
+      const observer = new ResizeObserver(checkOverflow);
+      observer.observe(element);
+      return () => observer.disconnect();
+    }
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [isLargeScreen, roomName, displayMode]);
+
+  const modeClass = isLargeScreen && displayMode !== 'normal' ? ` schedule-room--${displayMode}` : '';
+  return (
+    <div ref={roomRef} className={`schedule-room${modeClass}`}>
+      <span className="schedule-room-full" aria-hidden={displayMode === 'short'}>{roomName}</span>
+      <span className="schedule-room-short" aria-hidden={displayMode !== 'short'}>{shortRoomName}</span>
+    </div>
+  );
+}
+
 function ScheduleEvent({ event, lane, laneCount }) {
   const position = positionEvent(event);
   if (!position) return null;
@@ -75,7 +145,7 @@ function ScheduleEvent({ event, lane, laneCount }) {
       <div className="schedule-time">{start?.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - {end?.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
       <h3>{ event.text || event.matiere || 'Cours'}</h3>
       {event.isAnnule && <span className="schedule-cancelled">Annulé</span>}
-      <div className="schedule-room">{event.salle?.trim() || ''}</div>
+      <ScheduleRoom room={event.salle} />
       {event.prof?.trim() && <div className="schedule-prof">{event.prof.trim()}</div>}
       {event.groupe?.trim() && <div className="schedule-group">{event.groupe.trim()}</div>}
     </article>

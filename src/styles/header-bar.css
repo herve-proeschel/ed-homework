@@ -27,8 +27,59 @@
   outline-offset: 2px;
 }
 
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
 .app-topbar {
-  display: contents;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: flex-start;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  box-sizing: border-box;
+  padding: 0 24px;
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: 0 1px 2px rgb(60 64 67 / 20%), 0 1px 3px 1px var(--shadow);
+}
+
+.app-floating-actions {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 19;
+  padding: 4px;
+  border: 1px solid var(--border-soft);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: 0 4px 12px rgb(60 64 67 / 20%);
+}
+
+.app-floating-actions .action-row--compact {
+  position: static;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+@media screen and (max-width: 767px) {
+  .app-floating-actions {
+    bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .title-switch {
@@ -59,20 +110,28 @@
   .title-switch {
     font-size: 1.125rem;
   }
+
+  .app-topbar {
+    padding: 0 16px;
+  }
 }
 
 @media screen and (min-width: 768px) {
   .app-topbar {
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 20;
     left: auto;
     width: 100vw;
-    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
     align-items: center;
     gap: 24px;
-    margin: -24px 0 24px;
-    padding: 0 calc(clamp(24px, 5vw, 80px) + 60px) 8px clamp(24px, 5vw, 80px);
+    margin: -16px 0 0;
+    padding: 0 calc(clamp(24px, 5vw, 80px) + 60px) 0 clamp(24px, 5vw, 80px);
     margin-left: calc(50% - 50vw);
     background: var(--card);
+    border-radius: 0;
     border-bottom: 1px solid var(--border-soft);
     box-shadow: 0 1px 2px rgb(60 64 67 / 15%);
   }
@@ -93,7 +152,7 @@
     width: auto;
     flex: 0 0 auto;
     grid-template-columns: 44px auto 44px;
-    min-height: 80px;
+    min-height: 64px;
     gap: 16px;
     margin: 0;
     padding: 0;
@@ -108,7 +167,7 @@
 
   .app-header--logged-in > .user-badge {
     position: absolute;
-    top: calc(50% - 4px);
+    top: 50%;
     right: clamp(24px, 5vw, 80px);
     z-index: 1;
     transform: translateY(-50%);
@@ -140,40 +199,10 @@
   }
 
   .app-header {
-    min-height: 88px;
+    min-height: 64px;
   }
 
   .app-header .title-switch {
     font-size: 1.625rem;
-  }
-}
-
-@media screen and (min-width: 768px) and (max-width: 1199px),
-  screen and (min-width: 768px) and (orientation: portrait) {
-  .app-topbar {
-    flex-wrap: wrap;
-    gap: 8px 0;
-    padding-right: clamp(24px, 5vw, 80px);
-  }
-
-  .app-header {
-    position: relative;
-    width: 100%;
-    flex: 1 1 100%;
-    grid-template-columns: 44px minmax(0, 1fr) 44px;
-  }
-
-  .app-header--logged-in {
-    grid-template-columns: 44px minmax(0, 1fr);
-  }
-
-  .app-header--logged-in > .user-badge {
-    top: 50%;
-    right: 0;
-  }
-
-  .app-topbar > .student-status-toolbar {
-    flex: 1 1 100%;
-    width: 100%;
   }
 }
