@@ -2,6 +2,7 @@ import { decodeBase64Utf8 } from '../services/edClient';
 import { formatDay } from '../utils/formatDay';
 import {
   getHomeworkDocumentLabel,
+  getHomeworkDocumentFilename,
   getHomeworkDocumentSections,
   getHomeworkDocumentUrl,
   getHomeworkSession,
@@ -23,8 +24,7 @@ function DocumentLinks({ documents, onOpenDocument }) {
           <li key={document.id || document.fichierId}>
             <a
               href={url}
-              target="_blank"
-              rel="noopener noreferrer"
+              download={getHomeworkDocumentFilename(document)}
               onClick={(event) => {
                 if (!onOpenDocument) return;
                 event.preventDefault();

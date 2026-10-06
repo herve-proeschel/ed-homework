@@ -4,6 +4,7 @@ import { formatDay } from '../utils/formatDay';
 import {
   escapeHtml,
   getHomeworkDocumentLabel,
+  getHomeworkDocumentFilename,
   getHomeworkDocumentSections,
   getHomeworkDocumentUrl,
   getHomeworkSession,
@@ -18,7 +19,7 @@ export function usePrintHomework({ logStatus }) {
         .map((document) => {
           const url = getHomeworkDocumentUrl(document);
           if (!url) return '';
-          return `<li><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(getHomeworkDocumentLabel(document))}</a></li>`;
+          return `<li><a href="${escapeHtml(url)}" download="${escapeHtml(getHomeworkDocumentFilename(document))}">${escapeHtml(getHomeworkDocumentLabel(document))}</a></li>`;
         })
         .filter(Boolean)
         .join('');

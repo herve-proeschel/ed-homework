@@ -56,6 +56,18 @@ export function getHomeworkDocumentLabel(document) {
   return document?.libelle || document?.nom || document?.name || 'Document';
 }
 
+export function getHomeworkDocumentFilename(document) {
+  const label = [...String(getHomeworkDocumentLabel(document))
+    .replace(/[<>:"/\\|?*]/g, '_')]
+    .map((character) => (character.charCodeAt(0) < 32 ? '_' : character))
+    .join('')
+    .trim();
+  if (label && label !== '.' && label !== '..') return label;
+
+  const id = normalizeDocumentId(document?.id ?? document?.fichierId);
+  return `document-${id || 'telechargement'}`;
+}
+
 export function buildDocumentEndpoint(documentId, documentType = 'FICHIER_CDT') {
   const normalizedId = normalizeDocumentId(documentId);
   if (!normalizedId) return '';

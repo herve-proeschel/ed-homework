@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildDocumentEndpoint,
   escapeHtml,
+  getHomeworkDocumentFilename,
   getHomeworkDocumentSections,
   getHomeworkSession,
 } from './homeworkDocuments';
@@ -53,5 +54,10 @@ describe('homework document helpers', () => {
 
   it('escapes labels and URLs used in printable links', () => {
     expect(escapeHtml(`A & B <cours> "1"`)).toBe('A &amp; B &lt;cours&gt; &quot;1&quot;');
+  });
+
+  it('uses a safe document title as the downloaded filename', () => {
+    expect(getHomeworkDocumentFilename({ id: 766, libelle: 'Cours: chapitre 1.pdf' })).toBe('Cours_ chapitre 1.pdf');
+    expect(getHomeworkDocumentFilename({ id: 766, libelle: '??' })).toBe('__');
   });
 });

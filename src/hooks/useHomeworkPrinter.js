@@ -5,6 +5,7 @@ import { useStatusMessage } from './useStatusMessage';
 import { usePrintHomework } from './usePrintHomework';
 import { useEleveSelection } from './useEleveSelection';
 import { useAuthSession } from './useAuthSession';
+import { getHomeworkDocumentFilename } from '../utils/homeworkDocuments';
 
 const VIEW_STATUS_MESSAGES = {
   homework: 'Téléchargez les devoirs.',
@@ -107,20 +108,18 @@ export function useHomeworkPrinter() {
   } = useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents: resetDownloadedData });
 
   const openDocument = useCallback(async (document) => {
-    const popup = window.open('', '_blank');
-    if (!popup) {
-      logStatus('Autorisez les fenêtres pop-up pour ouvrir ce document.', true);
-      return;
-    }
-    popup.opener = null;
-
     try {
       const blob = await clientRef.current.downloadDocument(document.id ?? document.fichierId, document.type);
       const objectUrl = URL.createObjectURL(blob);
-      popup.location.href = objectUrl;
+      const downloadLink = window.document.createElement('a');
+      downloadLink.href = objectUrl;
+      downloadLink.download = getHomeworkDocumentFilename(document);
+      downloadLink.style.display = 'none';
+      window.document.body.appendChild(downloadLink);
+      downloadLink.click();
+      downloadLink.remove();
       window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
     } catch (error) {
-      popup.close();
       if (isSessionExpiredError({ message: error.message })) {
         handleSessionExpired();
       } else {
