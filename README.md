@@ -16,6 +16,7 @@ Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou
 * **Consultation du cahier de texte :**
   * Récupération des devoirs des dates futures, avec progression affichée pendant la collecte.
   * Décodage automatique du descriptif des devoirs (données Base64 + assainissement HTML).
+  * Affichage des documents associés aux consignes et au contenu de séance via le relais Cloudflare.
   * Statut d'avancement (fait / à faire).
 * **Consultation de l'emploi du temps :**
   * Navigation directe vers les devoirs, l'emploi du temps et les notes depuis le menu d'options, ou bascule entre les vues en cliquant sur le titre.
@@ -113,7 +114,7 @@ Ajoutez également les secrets d'environnement `ALLOWED_ORIGINS` et `CLOUDFLARE_
 
 Pour le workflow GitHub Pages, ajoutez également le secret d'environnement `VITE_PROXY_BASE_URL` contenant l'URL publique du Worker dans `cloudflare-production`. Le job de build GitHub Pages utilise cet environnement pour accéder au secret. Comme cette valeur est utilisée par le navigateur, Vite l'intègre au JavaScript généré : elle ne doit donc pas contenir un secret réel.
 
-Le worker n'autorise que les routes et méthodes utilisées par l'application, limite les corps à 64 KiB et annule les appels amont après 10 secondes. Les tentatives de connexion et les réponses 2FA sont limitées à 5 par minute et par adresse IP. Pour un rate limiting distribué entre les instances Cloudflare, configurer les bindings `LOGIN_RATE_LIMITER` et `TWO_FA_RATE_LIMITER`; sans ces bindings, un limiteur mémoire local fournit un filet de sécurité non distribué.
+Le worker n'autorise que les routes et méthodes utilisées par l'application, notamment le téléchargement GET des documents `FICHIER_CDT`, limite les corps à 64 KiB et annule les appels amont après 10 secondes. Les tentatives de connexion et les réponses 2FA sont limitées à 5 par minute et par adresse IP. Pour un rate limiting distribué entre les instances Cloudflare, configurer les bindings `LOGIN_RATE_LIMITER` et `TWO_FA_RATE_LIMITER`; sans ces bindings, un limiteur mémoire local fournit un filet de sécurité non distribué.
 
 Dans `wrangler.toml`, déclarez les deux bindings avec des `namespace_id` distincts :
 

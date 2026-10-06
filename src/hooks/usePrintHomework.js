@@ -1,29 +1,52 @@
 import { useCallback, useState } from 'react';
 import { decodeBase64Utf8 } from '../services/edClient';
 import { formatDay } from '../utils/formatDay';
+import {
+  escapeHtml,
+  getHomeworkDocumentLabel,
+  getHomeworkDocumentSections,
+  getHomeworkDocumentUrl,
+  getHomeworkSession,
+} from '../utils/homeworkDocuments';
 
 export function usePrintHomework({ logStatus }) {
   const [printDays, setPrintDays] = useState(null);
 
   function buildPrintHtml(daysData) {
+    function documentLinksHtml(documents) {
+      const links = documents
+        .map((document) => {
+          const url = getHomeworkDocumentUrl(document);
+          if (!url) return '';
+          return `<li><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(getHomeworkDocumentLabel(document))}</a></li>`;
+        })
+        .filter(Boolean)
+        .join('');
+      return links
+        ? `<hr class="subject-documents-separator"><h4 class="subject-documents-title">Documents</h4><ul class="subject-documents">${links}</ul>`
+        : '';
+    }
+
     let contentHtml = '';
     daysData.forEach((day) => {
       contentHtml += `<div class="day-container"><h2 class="day-title">${formatDay(day.date)}</h2>`;
       let hwCount = 0;
       (day.matieres || []).forEach((m) => {
         const aFaire = m.aFaire;
-        if (!aFaire && (!m.contenuDeSeance || !m.contenuDeSeance.contenu)) return;
+        const session = getHomeworkSession(m);
+        const documents = getHomeworkDocumentSections(m);
+        if (!aFaire && !session?.contenu && !documents.homework.length && !documents.session.length) return;
         hwCount++;
         const detailsHtml = decodeBase64Utf8(aFaire ? aFaire.contenu : '');
-        const sessionHtml = decodeBase64Utf8(m.contenuDeSeance?.contenu || '');
+        const sessionHtml = decodeBase64Utf8(session?.contenu || '');
         const dateDonne = aFaire && aFaire.donneLe ? `(Donné le ${formatDay(aFaire.donneLe)})` : '';
         const isEval = aFaire && aFaire.interrogation ? '<span class="badge-eval">Contrôle</span>' : '';
         const homeworkHtml = aFaire
-          ? `<h3 class="subject-section-title">À faire</h3><div class="subject-content">${detailsHtml || '<em>Sans consigne écrite</em>'}</div>`
+          ? `<h3 class="subject-section-title">À faire</h3><div class="subject-content">${detailsHtml || '<em>Sans consigne écrite</em>'}</div>${documentLinksHtml(documents.homework)}`
           : '';
-        const sessionContentHtml = sessionHtml
+        const sessionContentHtml = sessionHtml || documents.session.length
           ? '<hr class="subject-section-separator"><h3 class="subject-section-title">Contenu de séance</h3>' +
-            `<div class="subject-content">${sessionHtml}</div>`
+            `${sessionHtml ? `<div class="subject-content">${sessionHtml}</div>` : ''}${documentLinksHtml(documents.session)}`
           : '';
         contentHtml += `
           <div class="subject-box">

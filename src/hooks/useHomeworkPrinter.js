@@ -106,6 +106,29 @@ export function useHomeworkPrinter() {
     disconnect,
   } = useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents: resetDownloadedData });
 
+  const openDocument = useCallback(async (document) => {
+    const popup = window.open('', '_blank');
+    if (!popup) {
+      logStatus('Autorisez les fenêtres pop-up pour ouvrir ce document.', true);
+      return;
+    }
+    popup.opener = null;
+
+    try {
+      const blob = await clientRef.current.downloadDocument(document.id ?? document.fichierId, document.type);
+      const objectUrl = URL.createObjectURL(blob);
+      popup.location.href = objectUrl;
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+    } catch (error) {
+      popup.close();
+      if (isSessionExpiredError({ message: error.message })) {
+        handleSessionExpired();
+      } else {
+        logStatus(`Impossible d'ouvrir le document : ${error.message}`, true);
+      }
+    }
+  }, [clientRef, handleSessionExpired, logStatus]);
+
   const dateKey = (date) => date.toISOString().split('T')[0];
   const startOfWeek = (date) => {
     const monday = new Date(date);
@@ -403,6 +426,7 @@ export function useHomeworkPrinter() {
     selectView,
     retrieveSchedule,
     retrieveGrades,
+    openDocument,
     buildPrintHtml,
     run,
     printHomework,

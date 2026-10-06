@@ -25,7 +25,7 @@ function corsHeaders(origin) {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, X-Token, 2fa-token, x-gtk, x-cookies",
-    "Access-Control-Expose-Headers": "X-Token, x-token, 2fa-token, x-all-cookies, x-gtk",
+    "Access-Control-Expose-Headers": "X-Token, x-token, 2fa-token, x-all-cookies, x-gtk, Content-Disposition, Content-Length, Content-Type",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };
@@ -55,6 +55,13 @@ function routeInfo(request, url) {
     && ["get", "post"].includes(url.searchParams.get("verbe"))
     && isAllowedQuery(url, ["verbe", "v"])) {
     return { kind: url.searchParams.get("verbe") === "post" ? "twofa" : "qcm" };
+  }
+  if (path === "/v3/telechargement.awp" && method === "GET"
+    && url.searchParams.get("verbe") === "get"
+    && /^\d+$/.test(url.searchParams.get("fichierId") || "")
+    && url.searchParams.get("leTypeDeFichier") === "FICHIER_CDT"
+    && isAllowedQuery(url, ["verbe", "fichierId", "leTypeDeFichier", "v"])) {
+    return { kind: "document" };
   }
   if (method === "POST" && /^\/v3\/Eleves\/\d+\/cahierdetexte\.awp$/.test(path)
     && url.searchParams.get("verbe") === "get" && isAllowedQuery(url, ["verbe", "v"])) {
@@ -151,6 +158,10 @@ export default {
       });
 
       const responseHeaders = new Headers(corsHeaders(origin));
+      for (const name of ["Content-Disposition", "Content-Length", "Content-Type"]) {
+        const value = response.headers.get(name);
+        if (value) responseHeaders.set(name, value);
+      }
       const returnedToken = response.headers.get("x-token");
       const returnedTwoFaToken = response.headers.get("2fa-token") || response.headers.get("x-2fa-token");
       if (returnedToken) responseHeaders.set("x-token", returnedToken);

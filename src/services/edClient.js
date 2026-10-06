@@ -1,3 +1,5 @@
+import { buildDocumentEndpoint } from '../utils/homeworkDocuments';
+
 const PROXY_BASE_URL = import.meta.env.VITE_PROXY_BASE_URL;
 const ED_VERSION = '4.103.0';
 
@@ -88,7 +90,7 @@ export class EdClient {
     this.rawCookies = rawCookies || '';
   }
 
-  async apiCall(endpoint, method = 'POST', payload = {}, withToken = true) {
+  async request(endpoint, method = 'POST', payload = {}, withToken = true) {
     if (!PROXY_BASE_URL) {
       throw new Error('VITE_PROXY_BASE_URL est obligatoire pour contacter le proxy');
     }
@@ -146,11 +148,31 @@ export class EdClient {
       }
     }
 
+    return response;
+  }
+
+  async apiCall(endpoint, method = 'POST', payload = {}, withToken = true) {
+    const response = await this.request(endpoint, method, payload, withToken);
     const jsonResponse = await parseJsonResponse(response);
     if (!jsonResponse) {
       return { code: response.status, message: response.statusText || 'Erreur réseau/serveur' };
     }
     return jsonResponse;
+  }
+
+  async downloadDocument(documentId, documentType = 'FICHIER_CDT') {
+    const endpoint = buildDocumentEndpoint(documentId, documentType);
+    if (!endpoint) {
+      throw new Error('Identifiant de document invalide.');
+    }
+
+    const response = await this.request(endpoint, 'GET');
+    if (!response.ok) {
+      const errorResponse = await parseJsonResponse(response);
+      throw new Error(errorResponse?.message || `Impossible de télécharger le document (${response.status}).`);
+    }
+
+    return response.blob();
   }
 
   async initGtk() {

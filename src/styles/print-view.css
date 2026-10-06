@@ -116,6 +116,28 @@
   color: #0b4e84;
 }
 
+#printView .subject-documents-title {
+  margin: 10px 0 4px;
+  font-size: 0.85rem;
+  color: #0b4e84;
+}
+
+#printView .subject-documents-separator {
+  margin: 10px 0 0;
+  border: 0;
+  border-top: 1px solid #d5d5d5;
+}
+
+#printView .subject-documents {
+  margin: 0 0 4px;
+  padding-left: 20px;
+}
+
+#printView .subject-documents a {
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+
 #printView .subject-section-separator {
   margin: 14px 0 0;
   border: 0;
@@ -186,6 +208,14 @@
   }
 
   #printView .subject-section-separator {
+    border-top-color: var(--border-soft);
+  }
+
+  #printView .subject-documents-title {
+    color: var(--primary);
+  }
+
+  #printView .subject-documents-separator {
     border-top-color: var(--border-soft);
   }
 

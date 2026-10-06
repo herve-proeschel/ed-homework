@@ -36,7 +36,7 @@ flowchart LR
 | EcoleDirecte | Authentifier l'utilisateur et fournir les comptes, le cahier de texte et ses details. |
 | Service worker | Precacher le shell et les assets de la SPA en production; traiter les requetes GET/POST du proxy en `NetworkOnly`, sans cache de session. |
 
-Le Worker ne contient pas de base de donnees et ne persiste pas la session. Les tokens, cookies et identifiants sont geres par le navigateur et transmis au Worker pendant les appels.
+Le Worker ne contient pas de base de donnees et ne persiste pas la session. Les tokens, cookies et identifiants sont geres par le navigateur et transmis au Worker pendant les appels, y compris lors du telechargement d'un document.
 
 ## 3. Flux applicatif
 
@@ -81,7 +81,7 @@ POST /v3/Eleves/{eleveId}/cahierdetexte.awp?verbe=get
 POST /v3/Eleves/{eleveId}/cahierdetexte/{date}.awp?verbe=get
 ```
 
-Les details sont accumules dans `printDays`. Les contenus de devoirs encodes en Base64 sont decodes avant affichage dans `HomeWorkView`. Les reponses signalant une session expiree declenchent une nouvelle authentification si le mot de passe est encore present en memoire; sinon la session locale est supprimee et l'utilisateur doit se reconnecter.
+Les details sont accumules dans `printDays`. Les contenus de devoirs encodes en Base64 sont decodes avant affichage dans `HomeWorkView`. Les documents de `aFaire.documents` et de `aFaire.contenuDeSeance.documents` sont affiches sous leur section respective. Leur URL passe par le Worker (`/v3/telechargement.awp?verbe=get&fichierId=...&leTypeDeFichier=FICHIER_CDT&v=4.103.0`) et le clic les telecharge avec les en-tetes de session. Les reponses signalant une session expiree declenchent une nouvelle authentification si le mot de passe est encore present en memoire; sinon la session locale est supprimee et l'utilisateur doit se reconnecter.
 
 ### 3.3 Impression
 
@@ -96,7 +96,7 @@ Le Worker de `cloudflare.js` est un relais HTTP generique :
 3. Il force les en-tetes `Host`, `Origin`, `Referer`, `Accept` et `User-Agent` attendus par EcoleDirecte.
 4. Il reconstitue `Cookie` depuis `x-cookies` et `x-gtk`.
 5. Il relaie `2fa-token` et le corps de la requete.
-6. Il recopie la reponse et expose `X-Token`, `2fa-token`, `x-all-cookies` et `x-gtk` au navigateur.
+6. Il recopie la reponse et expose `X-Token`, `2fa-token`, `x-all-cookies` et `x-gtk` au navigateur, ainsi que les en-tetes de contenu utiles aux documents.
 
 Les cookies `Set-Cookie` retournes par EcoleDirecte sont reduits aux paires nom-valeur puis renvoyes dans `x-all-cookies`, afin que `EdClient` puisse les conserver hors du mecanisme de cookies du navigateur.
 
