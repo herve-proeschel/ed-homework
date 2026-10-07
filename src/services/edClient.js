@@ -148,6 +148,10 @@ export class EdClient {
       }
     }
 
+    if (refreshedToken || twoFaToken || newCookies) {
+      this.onStateChange?.(this.getState());
+    }
+
     return response;
   }
 

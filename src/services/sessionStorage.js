@@ -2,12 +2,13 @@ const SESSION_KEY = 'ed_session';
 const USER_KEY = 'ed_user';
 const FA_KEY = 'ed_fa';
 
+// localStorage : la session survit à la fermeture de l'onglet / du navigateur
 export function saveSession(state) {
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(state));
+  localStorage.setItem(SESSION_KEY, JSON.stringify(state));
 }
 
 export function restoreSession() {
-  const raw = sessionStorage.getItem(SESSION_KEY);
+  const raw = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
   if (!raw) return null;
   try {
     const saved = JSON.parse(raw);
@@ -19,6 +20,7 @@ export function restoreSession() {
 }
 
 export function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
   sessionStorage.removeItem(SESSION_KEY);
 }
 

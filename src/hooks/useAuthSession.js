@@ -10,7 +10,15 @@ import {
 } from '../services/sessionStorage';
 
 export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents }) {
-  const clientRef = useRef(new EdClient());
+  const clientRef = useRef(null);
+  const persistClientStateRef = useRef(() => {});
+  const createClient = useCallback(() => {
+    const client = new EdClient();
+    // Le token est renouvelé à chaque réponse : on le sauvegarde pour garder la session vivante
+    client.onStateChange = (state) => persistClientStateRef.current(state);
+    return client;
+  }, []);
+  if (!clientRef.current) clientRef.current = createClient();
   const [username, setUsername] = useState(() => getSavedUsername());
   const [password, setPassword] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -53,6 +61,16 @@ export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, se
       displayName: displayNameOverride ?? displayNameRef.current,
     });
   }, [eleveListRef, selectedEleveIdRef]);
+
+  persistClientStateRef.current = (clientState) => {
+    if (!selectedEleveIdRef.current || !clientState.activeToken) return;
+    saveSession({
+      ...clientState,
+      selectedEleveId: selectedEleveIdRef.current,
+      eleveList: eleveListRef.current,
+      displayName: displayNameRef.current,
+    });
+  };
 
   const askQcm = useCallback((question, options) => {
     return new Promise((resolve, reject) => {
@@ -117,7 +135,7 @@ export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, se
 
   const handleSessionExpired = useCallback(
     (msg = 'Votre session a expiré après une période d’inactivité. Veuillez saisir votre mot de passe pour vous reconnecter.') => {
-      clientRef.current = new EdClient();
+      clientRef.current = createClient();
       setIsLoggedIn(false);
       selectedEleveIdRef.current = null;
       eleveListRef.current = [];
@@ -128,11 +146,11 @@ export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, se
       clearSession();
       logStatus(msg, true);
     },
-    [logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents, setDisplayName],
+    [createClient, logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents, setDisplayName],
   );
 
   const disconnect = useCallback(() => {
-    clientRef.current = new EdClient();
+    clientRef.current = createClient();
     setIsLoggedIn(false);
     selectedEleveIdRef.current = null;
     eleveListRef.current = [];
@@ -143,7 +161,7 @@ export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, se
     setPassword('');
     setDisplayName('');
     logStatus('Vous êtes déconnecté.');
-  }, [logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents, setDisplayName]);
+  }, [createClient, logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents, setDisplayName]);
 
   return {
     clientRef,
