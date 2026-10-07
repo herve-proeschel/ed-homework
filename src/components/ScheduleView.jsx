@@ -124,7 +124,7 @@ function ScheduleRoom({ room }) {
   return (
     <div ref={roomRef} className={`schedule-room${modeClass}`}>
       <span className="schedule-room-full" aria-hidden={displayMode === 'short'}>{roomName}</span>
-      <span className="schedule-room-short" aria-hidden={displayMode !== 'short'}>{shortRoomName}</span>
+      <span className="schedule-room-short" aria-hidden={displayMode === 'normal'}>{shortRoomName}</span>
     </div>
   );
 }

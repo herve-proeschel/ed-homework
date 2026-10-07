@@ -255,10 +255,12 @@
     font-size: 50%;
   }
 
+  #scheduleView .schedule-room--compact .schedule-room-full,
   #scheduleView .schedule-room--short .schedule-room-full {
     display: none;
   }
 
+  #scheduleView .schedule-room--compact .schedule-room-short,
   #scheduleView .schedule-room--short .schedule-room-short {
     display: block;
   }
