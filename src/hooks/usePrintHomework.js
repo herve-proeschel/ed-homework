@@ -59,7 +59,9 @@ export function usePrintHomework({ logStatus }) {
             ${sessionContentHtml}
           </div>`;
       });
-      if (hwCount === 0) {
+      if (day.loading) {
+        contentHtml += `<p style="font-style: italic; color: #666;">Téléchargement en cours</p>`;
+      } else if (hwCount === 0) {
         contentHtml += `<p style="font-style: italic; color: #666;">Aucun travail spécifique pour ce jour.</p>`;
       }
       contentHtml += `</div>`;

@@ -326,6 +326,10 @@ export function useHomeworkPrinter() {
         return;
       }
 
+      const isCurrentEleve = () => String(selectedEleveIdRef.current) === String(eleveId);
+      const progressiveDays = futureDates.map((date) => ({ date, matieres: [], loading: true }));
+      if (isCurrentEleve()) setPrintDays(progressiveDays);
+
       const detailedDays = [];
       for (let i = 0; i < futureDates.length; i++) {
         const date = futureDates[i];
@@ -350,7 +354,11 @@ export function useHomeworkPrinter() {
 
         if (detail && detail.code === 200 && detail.data) {
           detailedDays.push(detail.data);
+          progressiveDays[i] = detail.data;
+        } else {
+          progressiveDays[i] = null;
         }
+        if (isCurrentEleve()) setPrintDays(progressiveDays.filter((day) => day !== null));
       }
 
       persistSession();

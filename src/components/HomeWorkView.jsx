@@ -56,7 +56,9 @@ export default function HomeWorkView({ days, onOpenDocument }) {
         return (
           <div className="day-container" key={day.date}>
             <h2 className="day-title">{formatDay(day.date)}</h2>
-            {subjects.length === 0 ? (
+            {day.loading ? (
+              <p style={{ fontStyle: 'italic', color: '#666' }}>Téléchargement en cours</p>
+            ) : subjects.length === 0 ? (
               <p style={{ fontStyle: 'italic', color: '#666' }}>Aucun travail spécifique pour ce jour.</p>
             ) : (
               subjects.map((m, idx) => {
