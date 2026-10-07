@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import './App.css';
 import StatusMessage from './components/StatusMessage';
 import QcmModal from './components/QcmModal';
@@ -18,6 +18,7 @@ const VIEW_EMPTY_MESSAGES = {
 };
 
 function AppContent() {
+  const touchStartRef = useRef(null);
   const {
     username,
     setUsername,
@@ -53,6 +54,29 @@ function AppContent() {
     restoreFromStorage,
   } = useAppContext();
 
+  const handleTouchStart = (event) => {
+    const touch = event.changedTouches[0];
+    if (!touch || event.target?.closest?.('input, textarea, select, [role="dialog"], .theme-menu-popover')) {
+      touchStartRef.current = null;
+      return;
+    }
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = (event) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    const touch = event.changedTouches[0];
+    if (!start || !touch) return;
+
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    const swipeThreshold = 50;
+    if (Math.abs(deltaX) < swipeThreshold || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+
+    switchView(deltaX < 0 ? 1 : -1);
+  };
+
   useEffect(() => {
     restoreFromStorage();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
@@ -64,7 +88,7 @@ function AppContent() {
   }, [afterPrint]);
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className="app-topbar">
           <AppHeader
             viewMode={viewMode}

@@ -245,9 +245,11 @@ export function useHomeworkPrinter() {
     logStatus(VIEW_STATUS_MESSAGES[mode]);
   }, [logStatus]);
 
-  const switchView = useCallback(() => {
-    const nextMode = { homework: 'schedule', schedule: 'grades', grades: 'homework' }[viewMode];
-    selectView(nextMode);
+  const switchView = useCallback((direction = 1) => {
+    const viewModes = ['homework', 'schedule', 'grades'];
+    const currentIndex = viewModes.indexOf(viewMode);
+    const nextIndex = (currentIndex + direction + viewModes.length) % viewModes.length;
+    selectView(viewModes[nextIndex]);
   }, [selectView, viewMode]);
 
   const run = useCallback(async () => {
