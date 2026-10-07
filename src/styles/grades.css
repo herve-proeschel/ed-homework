@@ -1,4 +1,4 @@
-@media screen {
+﻿@media screen {
   #gradesView {
     width: 100%;
     max-width: 480px;
@@ -35,13 +35,11 @@
 
   .grades-subject {
     margin-bottom: 16px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
+    perspective: 1200px;
   }
 
-  .grades-subject > header {
+  .grades-face > header,
+  .grade-back > header {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
@@ -50,6 +48,89 @@
     background: var(--primary);
     color: var(--primary-contrast);
   }
+
+  .grades-flip {
+    display: grid;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: visible;
+    transform-style: preserve-3d;
+    transition: transform 0.5s;
+  }
+
+  .is-flipped > .grades-flip {
+    transform: rotateY(180deg);
+  }
+
+  .grades-face {
+    grid-area: 1 / 1;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: inherit;
+    overflow: hidden;
+    background: var(--card);
+  }
+
+  .grades-face--back {
+    transform: rotateY(180deg);
+  }
+
+  .grade-item.has-program {
+    cursor: pointer;
+  }
+
+  .grade-item.has-program .grade-title::after {
+    content: ' ⟳';
+    color: var(--muted-text);
+  }
+
+  .grade-back {
+    cursor: pointer;
+    height: 100%;
+  }
+
+  .program-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .program-item:first-child {
+    border-top: 0;
+  }
+
+  .program-label small {
+    display: block;
+    color: var(--muted-text);
+    font-size: 0.8rem;
+  }
+
+  .program-level {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+  }
+
+  .program-level i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+  }
+
+  .program-level strong {
+    margin-left: 6px;
+  }
+
+  .program-level--1 i.is-on { background: #ff0000; }
+  .program-level--2 i.is-on { background: #ffc000; }
+  .program-level--3 i.is-on { background: #0070c0; }
+  .program-level--4 i.is-on { background: #00b050; }
 
   .grades-subject h2 {
     margin: 0;
@@ -99,15 +180,16 @@
   }
 
 
-  .grades-subject--general > header {
+  .grades-subject--general .grades-face--front > header {
     background: var(--primary-hover, var(--primary));
   }
 
-  .grades-subject > header {
+  .grades-face > header,
+  .grade-back > header {
     flex-wrap: wrap;
   }
 
-  .grades-subject > header h2 {
+  .grades-face > header h2 {
     flex: 1 1 auto;
   }
 
@@ -207,14 +289,15 @@
     border-color: transparent;
   }
 
-  .grades-subject {
-    border: 1px solid var(--border-soft);
+  .grades-flip {
+    border-color: var(--border-soft);
     border-radius: 16px;
     box-shadow: 0 1px 2px rgb(60 64 67 / 15%);
   }
 
-  .grades-subject > header,
-  .grades-subject--general > header {
+  .grades-face > header,
+  .grade-back > header,
+  .grades-subject--general .grades-face--front > header {
     padding: 12px 16px;
     background: var(--primary-container);
     color: var(--on-primary-container);

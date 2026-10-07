@@ -38,10 +38,12 @@ function Bar({ label, value, kind }) {
   );
 }
 
-function AverageBox({ title, subtitle, stats, previousLabel, general = false, children }) {
+function AverageBox({ title, subtitle, stats, previousLabel, general = false, back = null, children }) {
   const diff = stats.average !== null && stats.classAverage !== null ? stats.average - stats.classAverage : null;
   return (
-    <section className={`grades-subject${general ? ' grades-subject--general' : ''}`}>
+    <section className={`grades-subject${general ? ' grades-subject--general' : ''}${back ? ' is-flipped' : ''}`}>
+      <div className="grades-flip">
+      <div className="grades-face grades-face--front">
       <header>
         <h2>{title}</h2>
         {subtitle && <span className="grades-average">{subtitle}</span>}
@@ -56,14 +58,51 @@ function AverageBox({ title, subtitle, stats, previousLabel, general = false, ch
         )}
       </div>
       {children}
+      </div>
+      <div className="grades-face grades-face--back" aria-hidden={!back}>{back}</div>
+      </div>
     </section>
   );
 }
 
-function GradeItem({ note }) {
-  const classAverage = parseNumber(note.moyenneClasse);
+const LEVELS = { 1: 'Non atteint', 2: 'Partiellement atteint', 3: 'Atteint', 4: 'Dépassé' };
+
+function ProgramBack({ note, onClose }) {
   return (
-    <li className={`grade-item${note.nonSignificatif ? ' is-ignored' : ''}`}>
+    <div className="grade-back" role="button" tabIndex={0} onClick={onClose} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClose()}>
+      <header>
+        <h2>{note.devoir || 'Devoir'}</h2>
+        <span className="grades-average">Note : {formatGrade(note)}</span>
+      </header>
+      <ul>
+        {note.elementsProgramme.map((el) => {
+          const level = Math.max(0, Math.min(4, parseInt(el.valeur, 10) || 0));
+          return (
+            <li key={el.idElemProg} className="program-item">
+              <span className="program-label">
+                {el.descriptif}
+                {el.libelleCompetence && <small>{el.libelleCompetence}</small>}
+              </span>
+              <span className={`program-level program-level--${level}`} title={LEVELS[level] || ''}>
+                {[1, 2, 3, 4].map((n) => <i key={n} className={n <= level ? 'is-on' : ''} />)}
+                <strong>{level}/4</strong>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function GradeItem({ note, onFlip }) {
+  const classAverage = parseNumber(note.moyenneClasse);
+  const hasProgram = Array.isArray(note.elementsProgramme) && note.elementsProgramme.length > 0;
+  const flipProps = hasProgram
+    ? { onClick: onFlip, onKeyDown: (e) => (e.key === 'Enter' || e.key === ' ') && onFlip(), role: 'button', tabIndex: 0 }
+    : {};
+  return (
+    <li className={`grade-item${note.nonSignificatif ? ' is-ignored' : ''}${hasProgram ? ' has-program' : ''}`} {...flipProps}>
       <span className="grade-date">{formatDate(note.date)}</span>
       <span className="grade-title">
         {note.devoir || 'Devoir'}
@@ -81,6 +120,7 @@ function GradeItem({ note }) {
 
 export default function GradesView({ grades }) {
   const [selected, setSelected] = useState('');
+  const [flippedId, setFlippedId] = useState(null);
   if (!grades) return null;
 
   const periods = grades.periodes;
@@ -98,7 +138,7 @@ export default function GradesView({ grades }) {
               key={period.codePeriode}
               aria-selected={period.codePeriode === code}
               className={`grades-period${period.codePeriode === code ? ' is-active' : ''}`}
-              onClick={() => setSelected(period.codePeriode)}
+              onClick={() => { setSelected(period.codePeriode); setFlippedId(null); }}
             >
               {period.periode}
             </button>
@@ -116,19 +156,22 @@ export default function GradesView({ grades }) {
             previousLabel={report.previousPeriod?.periode}
           />
           {report.subjects.length === 0 && <div className="grades-empty">Aucune note pour cette période.</div>}
-          {report.subjects.map((subject) => (
-            <AverageBox
-              key={subject.code}
-              title={subject.name}
-              stats={subject}
-              previousLabel={report.previousPeriod?.periode}
-            >
-              {subject.notes.length > 0 && <ul>{subject.notes.map((note) => <GradeItem key={note.id} note={note} />)}</ul>}
-            </AverageBox>
-          ))}
+          {report.subjects.map((subject) => {
+            const flipped = subject.notes.find((n) => n.id === flippedId);
+            return (
+              <AverageBox
+                key={subject.code}
+                title={subject.name}
+                stats={subject}
+                previousLabel={report.previousPeriod?.periode}
+                back={flipped ? <ProgramBack note={flipped} onClose={() => setFlippedId(null)} /> : null}
+              >
+                {subject.notes.length > 0 && <ul>{subject.notes.map((note) => <GradeItem key={note.id} note={note} onFlip={() => setFlippedId(note.id)} />)}</ul>}
+              </AverageBox>
+            );
+          })}
         </>
       )}
     </div>
   );
 }
-
