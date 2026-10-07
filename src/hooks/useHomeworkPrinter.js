@@ -13,6 +13,17 @@ const VIEW_STATUS_MESSAGES = {
   grades: 'Téléchargez les notes.',
 };
 
+const VIEW_MODE_STORAGE_KEY = 'ed-homework:viewMode';
+
+function getSavedViewMode() {
+  try {
+    const saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    return saved in VIEW_STATUS_MESSAGES ? saved : 'homework';
+  } catch {
+    return 'homework';
+  }
+}
+
 function createDownloadedData() {
   return {
     homework: null,
@@ -28,7 +39,7 @@ export function useHomeworkPrinter() {
   const [downloadedDataByEleve, setDownloadedDataByEleve] = useState({});
   const downloadedDataByEleveRef = useRef(downloadedDataByEleve);
   const autoDownloadKeyRef = useRef('');
-  const [viewMode, setViewMode] = useState('homework');
+  const [viewMode, setViewMode] = useState(getSavedViewMode);
   const [scheduleEvents, setScheduleEvents] = useState([]);
   const [scheduleBusy, setScheduleBusy] = useState(false);
   const [scheduleWeekCount, setScheduleWeekCount] = useState(0);
@@ -226,6 +237,11 @@ export function useHomeworkPrinter() {
 
   const selectView = useCallback((mode) => {
     setViewMode(mode);
+    try {
+      localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+    } catch {
+      // stockage indisponible : on ignore
+    }
     logStatus(VIEW_STATUS_MESSAGES[mode]);
   }, [logStatus]);
 
