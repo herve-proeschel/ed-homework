@@ -50,17 +50,24 @@
   }
 
   .grades-flip {
+    --grades-flip-duration: 0.5s;
     display: grid;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 6px;
     overflow: visible;
     transform-style: preserve-3d;
-    transition: transform 0.5s;
+    transition: transform var(--grades-flip-duration), height var(--grades-flip-duration) var(--grades-flip-duration);
   }
 
   .is-flipped > .grades-flip {
     transform: rotateY(180deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grades-flip {
+      transition: none;
+    }
   }
 
   .grades-face {

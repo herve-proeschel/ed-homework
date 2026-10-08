@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { buildGradesReport, defaultPeriodCode, formatNumber, parseNumber } from '../utils/grades';
 
 const TRENDS = {
@@ -27,6 +27,69 @@ function Trend({ trend }) {
   return <span className={`grade-trend grade-trend--${trend}`} title={label}>{icon} {label}</span>;
 }
 
+function useAnimatedFlipHeight() {
+  const flipRef = useRef(null);
+  const previousHeightRef = useRef(null);
+  const transitionEndRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const flip = flipRef.current;
+    if (!flip) return;
+
+    const previousTransitionEnd = transitionEndRef.current;
+    let startHeight = previousHeightRef.current;
+    if (previousTransitionEnd) {
+      startHeight = flip.getBoundingClientRect().height;
+      flip.removeEventListener('transitionend', previousTransitionEnd);
+      transitionEndRef.current = null;
+    }
+    if (startHeight === null) {
+      startHeight = flip.getBoundingClientRect().height;
+    }
+
+    const reducedMotion = typeof window !== 'undefined'
+      && typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    flip.style.transition = reducedMotion
+      ? 'none'
+      : 'transform var(--grades-flip-duration), height 0s';
+    flip.style.height = `${startHeight}px`;
+    void flip.offsetHeight;
+    flip.style.height = 'auto';
+    const endHeight = flip.getBoundingClientRect().height;
+    previousHeightRef.current = endHeight;
+
+    if (reducedMotion || Math.abs(endHeight - startHeight) < 1) {
+      flip.style.transition = '';
+      flip.style.height = '';
+      return;
+    }
+
+    flip.style.height = `${startHeight}px`;
+    void flip.offsetHeight;
+    flip.style.transition = '';
+    flip.style.height = `${endHeight}px`;
+
+    const handleTransitionEnd = (event) => {
+      if (event.propertyName !== 'height') return;
+      flip.style.height = '';
+      transitionEndRef.current = null;
+    };
+    flip.addEventListener('transitionend', handleTransitionEnd);
+    transitionEndRef.current = handleTransitionEnd;
+  });
+
+  useLayoutEffect(() => () => {
+    const flip = flipRef.current;
+    const transitionEnd = transitionEndRef.current;
+    if (!flip || !transitionEnd) return;
+    flip.removeEventListener('transitionend', transitionEnd);
+    transitionEndRef.current = null;
+  }, []);
+
+  return flipRef;
+}
+
 function Bar({ label, value, kind }) {
   if (value === null) return null;
   return (
@@ -39,10 +102,11 @@ function Bar({ label, value, kind }) {
 }
 
 function AverageBox({ title, subtitle, stats, previousLabel, general = false, back = null, children }) {
+  const flipRef = useAnimatedFlipHeight();
   const diff = stats.average !== null && stats.classAverage !== null ? stats.average - stats.classAverage : null;
   return (
     <section className={`grades-subject${general ? ' grades-subject--general' : ''}${back ? ' is-flipped' : ''}`}>
-      <div className="grades-flip">
+      <div ref={flipRef} className="grades-flip">
       <div className="grades-face grades-face--front">
       <header>
         <h2>{title}</h2>
