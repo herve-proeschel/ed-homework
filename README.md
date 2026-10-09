@@ -1,8 +1,8 @@
-﻿# ed-homework
+# ed-homework
 
 Application React autonome (SPA 100 % client-side) construite avec **Vite**, installable comme PWA et déployable sur un hébergement statique comme **GitHub Pages**.
 
-Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou élève), de gérer la validation 2FA, de choisir un profil élève, de consulter les devoirs, l'emploi du temps et les notes, puis d'imprimer les devoirs et l'emploi du temps ou de les exporter au format papier ou PDF.
+Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou élève), de gérer la validation 2FA, de choisir un profil élève, de consulter les devoirs, l'emploi du temps, les notes et les messages reçus, puis d'imprimer les devoirs et l'emploi du temps ou de les exporter au format papier ou PDF.
 
 ---
 
@@ -20,7 +20,7 @@ Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou
   * Affichage des documents associés aux consignes et au contenu de séance via le relais Cloudflare.
   * Statut d'avancement (fait / à faire).
 * **Consultation de l'emploi du temps :**
-  * Navigation directe vers les devoirs, l'emploi du temps et les notes depuis le menu d'options, ou bascule entre les vues en cliquant sur le titre.
+  * Navigation directe vers les devoirs, l'emploi du temps et les notes depuis le menu d'options, ou bascule entre les vues en cliquant sur le titre (hors messages).
   * Téléchargement de la semaine courante, puis de la semaine suivante au défilement.
   * Affichage vertical par jour dans l'application, sans échelle horaire répétitive.
 * **Consultation des notes :**
@@ -29,6 +29,12 @@ Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou
   * Indicateur de tendance (▲ hausse, ▬ stable, ▼ baisse) : la moyenne avec et sans les notes de la date la plus récente est comparée, avec un seuil de 0,25 point.
   * Rappel de la moyenne de la période précédente (semestre ou trimestre) lorsqu'elle existe, et onglets pour changer de période.
   * Les moyennes sont recalculées à partir des notes (ramenées sur 20 et pondérées par leur coefficient ; la moyenne générale est pondérée par les coefficients des matières), car les moyennes et le rang renvoyés par l'API peuvent être en retard ou incohérents. Le rang n'est pas affiché.
+  * Pas d'impression pour cette vue.
+* **Messages reçus (« Mes Messages ») :**
+  * Lien en tête du menu, au-dessus de la sélection des élèves.
+  * Liste des messages reçus (100 maximum, du plus récent au plus ancien) au style Material Design : avatar avec l'initiale de l'expéditeur, expéditeur, objet, date, et trombone lorsqu'une pièce jointe existe. Les messages non lus sont en gras.
+  * Un clic déplie la carte avec une animation et charge le contenu du message, mis en cache pour la session.
+  * Les pièces jointes sont affichées sous forme de puces et se téléchargent via le relais Cloudflare, comme les documents des devoirs.
   * Pas d'impression pour cette vue.
 * **Export & Impression PDF instantanés :**
   * Bouton dédié pour imprimer les devoirs ou l'emploi du temps téléchargé.
@@ -69,6 +75,7 @@ Il n'y a actuellement **aucun proxy Vite local** ni backend exécuté avec le fr
 ### 2. Format des requêtes ÉcoleDirecte
 * Les requêtes vers l'API sont émises en `POST` avec le payload sérialisé au format form-urlencoded : `data={"identifiant":"...","motdepasse":"..."}`.
 * Les requêtes authentifiées véhiculent l'en-tête `X-Token`.
+* Les messages utilisent `POST /v3/eleves/{eleveId}/messages.awp?verbe=get&typeRecuperation=received&...` pour la liste et `POST /v3/eleves/{eleveId}/messages/{messageId}.awp?verbe=get&mode=destinataire` pour le détail. Les pièces jointes se téléchargent avec `GET /v3/telechargement.awp` (`leTypeDeFichier=PIECE_JOINTE`).
 * L'emploi du temps utilise `POST /v3/E/{eleveId}/emploidutemps.awp?verbe=get` avec `dateDebut`, `dateFin` et `avecTrous: false`.
 
 ---
@@ -115,7 +122,7 @@ Ajoutez également les secrets d'environnement `ALLOWED_ORIGINS` et `CLOUDFLARE_
 
 Pour le workflow GitHub Pages, ajoutez également le secret d'environnement `VITE_PROXY_BASE_URL` contenant l'URL publique du Worker dans `cloudflare-production`. Le job de build GitHub Pages utilise cet environnement pour accéder au secret. Comme cette valeur est utilisée par le navigateur, Vite l'intègre au JavaScript généré : elle ne doit donc pas contenir un secret réel.
 
-Le worker n'autorise que les routes et méthodes utilisées par l'application, notamment le téléchargement GET des documents `FICHIER_CDT`, limite les corps à 64 KiB et annule les appels amont après 10 secondes. Les tentatives de connexion et les réponses 2FA sont limitées à 5 par minute et par adresse IP. Pour un rate limiting distribué entre les instances Cloudflare, configurer les bindings `LOGIN_RATE_LIMITER` et `TWO_FA_RATE_LIMITER`; sans ces bindings, un limiteur mémoire local fournit un filet de sécurité non distribué.
+Le worker n'autorise que les routes et méthodes utilisées par l'application, notamment le téléchargement GET des documents `FICHIER_CDT` et des pièces jointes `PIECE_JOINTE`, limite les corps à 64 KiB et annule les appels amont après 10 secondes. Les tentatives de connexion et les réponses 2FA sont limitées à 5 par minute et par adresse IP. Pour un rate limiting distribué entre les instances Cloudflare, configurer les bindings `LOGIN_RATE_LIMITER` et `TWO_FA_RATE_LIMITER`; sans ces bindings, un limiteur mémoire local fournit un filet de sécurité non distribué.
 
 Dans `wrangler.toml`, déclarez les deux bindings avec des `namespace_id` distincts :
 
