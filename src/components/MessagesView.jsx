@@ -1,5 +1,10 @@
 import { useState } from 'react';
 import { decodeBase64Utf8 } from '../services/edClient';
+import {
+  getHomeworkDocumentFilename,
+  getHomeworkDocumentLabel,
+  getHomeworkDocumentUrl,
+} from '../utils/homeworkDocuments';
 
 function formatMessageDate(value) {
   if (!value) return '';
@@ -20,7 +25,7 @@ function getSenderName(message) {
   return from?.name || [from?.prenom, from?.nom].filter(Boolean).join(' ') || 'Expéditeur inconnu';
 }
 
-export default function MessagesView({ messages, onLoadMessage }) {
+export default function MessagesView({ messages, onLoadMessage, onOpenDocument }) {
   const [expandedId, setExpandedId] = useState(null);
   const [details, setDetails] = useState({});
 
@@ -82,7 +87,26 @@ export default function MessagesView({ messages, onLoadMessage }) {
                   <>
                     <h4 className="subject-documents-title">Pièces jointes</h4>
                     <ul className="subject-documents">
-                      {files.map((file) => <li key={file.id || file.libelle}>{file.libelle || file.name}</li>)}
+                      {files.map((file) => {
+                        const url = getHomeworkDocumentUrl(file);
+                        return (
+                          <li key={file.id || file.libelle}>
+                            {url ? (
+                              <a
+                                href={url}
+                                download={getHomeworkDocumentFilename(file)}
+                                onClick={(event) => {
+                                  if (!onOpenDocument) return;
+                                  event.preventDefault();
+                                  onOpenDocument(file);
+                                }}
+                              >
+                                {getHomeworkDocumentLabel(file)}
+                              </a>
+                            ) : getHomeworkDocumentLabel(file)}
+                          </li>
+                        );
+                      })}
                     </ul>
                   </>
                 )}

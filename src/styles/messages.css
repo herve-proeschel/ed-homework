@@ -98,3 +98,8 @@
   font-style: italic;
   color: var(--muted-text, inherit);
 }
+
+.message-body .subject-documents a {
+  color: inherit;
+  overflow-wrap: anywhere;
+}

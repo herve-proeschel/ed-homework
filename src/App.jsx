@@ -156,7 +156,7 @@ function AppContent() {
 
       {viewMode === 'schedule' && <ScheduleView events={scheduleEvents} hasMore={hasMoreSchedule} loading={scheduleBusy} onLoadMore={retrieveSchedule} />}
       {viewMode === 'grades' && <GradesView grades={grades} />}
-      {viewMode === 'messages' && <MessagesView messages={messages} onLoadMessage={loadMessage} />}
+      {viewMode === 'messages' && <MessagesView messages={messages} onLoadMessage={loadMessage} onOpenDocument={openDocument} />}
       {viewMode === 'homework' && (
         <HomeWorkView
           days={printDays}

@@ -59,7 +59,7 @@ function routeInfo(request, url) {
   if (path === "/v3/telechargement.awp" && method === "GET"
     && url.searchParams.get("verbe") === "get"
     && /^\d+$/.test(url.searchParams.get("fichierId") || "")
-    && url.searchParams.get("leTypeDeFichier") === "FICHIER_CDT"
+    && ["FICHIER_CDT", "PIECE_JOINTE"].includes(url.searchParams.get("leTypeDeFichier"))
     && isAllowedQuery(url, ["verbe", "fichierId", "leTypeDeFichier", "v"])) {
     return { kind: "document" };
   }
