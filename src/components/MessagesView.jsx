@@ -25,6 +25,12 @@ function getSenderName(message) {
   return from?.name || [from?.prenom, from?.nom].filter(Boolean).join(' ') || 'Expéditeur inconnu';
 }
 
+const PAPERCLIP_PATH = 'M16.5 6v11.5a4 4 0 0 1-8 0V5a2.5 2.5 0 0 1 5 0v10.5a1 1 0 0 1-2 0V6H10v9.5a2.5 2.5 0 0 0 5 0V5a4 4 0 0 0-8 0v12.5a5.5 5.5 0 0 0 11 0V6h-1.5z';
+
+function getInitial(name) {
+  return (name.match(/\p{L}/u)?.[0] || '?').toUpperCase();
+}
+
 export default function MessagesView({ messages, onLoadMessage, onOpenDocument }) {
   const [expandedId, setExpandedId] = useState(null);
   const [details, setDetails] = useState({});
@@ -53,68 +59,83 @@ export default function MessagesView({ messages, onLoadMessage, onOpenDocument }
   };
 
   return (
-    <div id="messagesView">
+    <ul id="messagesView" aria-label="Messages reçus">
       {messages.map((message) => {
         const isExpanded = expandedId === message.id;
+        const isUnread = message.read === false;
         const detail = details[message.id];
         const files = detail?.data?.files || message.files || [];
+        const sender = getSenderName(message);
         const bodyHtml = decodeBase64Utf8(detail?.data?.content ?? '');
         return (
-          <div className={`message-card${isExpanded ? ' message-card--open' : ''}${message.read === false ? ' message-card--unread' : ''}`} key={message.id}>
+          <li className={`message-card${isExpanded ? ' message-card--open' : ''}${isUnread ? ' message-card--unread' : ''}`} key={message.id}>
             <button
               type="button"
               className="message-header"
               onClick={() => toggleMessage(message)}
               aria-expanded={isExpanded}
             >
-              <span className="message-subject">{message.subject || '(Sans objet)'}</span>
-              <span className="message-meta">
-                <span>{getSenderName(message)}</span>
-                <span>{formatMessageDate(message.date)}</span>
+              <span className="message-avatar" aria-hidden="true">{getInitial(sender)}</span>
+              <span className="message-text">
+                <span className="message-sender">{sender}</span>
+                <span className="message-subject">{message.subject || '(Sans objet)'}</span>
+                <span className="message-date">{formatMessageDate(message.date)}</span>
               </span>
-            </button>
-            {isExpanded && (
-              <div className="message-body">
-                {detail?.loading && <p className="messages-empty">Chargement du message...</p>}
-                {detail?.error && <p className="messages-empty">Erreur : {detail.error}</p>}
-                {detail?.data && (
-                  bodyHtml
-                    // eslint-disable-next-line react/no-danger -- rich text markup from API data, not user input
-                    ? <div className="subject-content" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
-                    : <em>Message vide</em>
+              <span className="message-trailing" aria-hidden="true">
+                {files.length > 0 && (
+                  <svg className="message-attachment-icon" viewBox="0 0 24 24" focusable="false">
+                    <path d={PAPERCLIP_PATH} />
+                  </svg>
                 )}
-                {detail?.data && files.length > 0 && (
-                  <>
-                    <h4 className="subject-documents-title">Pièces jointes</h4>
-                    <ul className="subject-documents">
-                      {files.map((file) => {
-                        const url = getHomeworkDocumentUrl(file);
-                        return (
-                          <li key={file.id || file.libelle}>
-                            {url ? (
-                              <a
-                                href={url}
-                                download={getHomeworkDocumentFilename(file)}
-                                onClick={(event) => {
-                                  if (!onOpenDocument) return;
-                                  event.preventDefault();
-                                  onOpenDocument(file);
-                                }}
-                              >
-                                {getHomeworkDocumentLabel(file)}
-                              </a>
-                            ) : getHomeworkDocumentLabel(file)}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </>
+                <svg className="message-chevron" viewBox="0 0 24 24" focusable="false">
+                  <path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z" />
+                </svg>
+              </span>
+              {files.length > 0 && <span className="visually-hidden">Pièce jointe</span>}
+            </button>
+            <div className="message-collapse" inert={!isExpanded} aria-hidden={!isExpanded}>
+              <div className="message-collapse-inner">
+                {detail && (
+                  <div className="message-body">
+                    {detail.loading && <p className="messages-empty">Chargement du message...</p>}
+                    {detail.error && <p className="messages-empty">Erreur : {detail.error}</p>}
+                    {detail.data && (
+                      bodyHtml
+                        // eslint-disable-next-line react/no-danger -- rich text markup from API data, not user input
+                        ? <div className="message-content" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+                        : <em>Message vide</em>
+                    )}
+                    {detail.data && files.length > 0 && (
+                      <div className="message-attachments">
+                        {files.map((file) => {
+                          const url = getHomeworkDocumentUrl(file);
+                          const label = getHomeworkDocumentLabel(file);
+                          return (
+                            <a
+                              className="message-chip"
+                              key={file.id || file.libelle}
+                              href={url || undefined}
+                              download={getHomeworkDocumentFilename(file)}
+                              onClick={(event) => {
+                                if (!onOpenDocument || !url) return;
+                                event.preventDefault();
+                                onOpenDocument(file);
+                              }}
+                            >
+                              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d={PAPERCLIP_PATH} /></svg>
+                              <span>{label}</span>
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
-          </div>
+            </div>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }
