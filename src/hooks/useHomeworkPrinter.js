@@ -108,6 +108,9 @@ export function useHomeworkPrinter() {
   const [gradesBusy, setGradesBusy] = useState(false);
   const [messages, setMessages] = useState(null);
   const [messagesBusy, setMessagesBusy] = useState(false);
+  const messagesSearchRef = useRef(0);
+  const messagesQueryRef = useRef('');
+  const [messagesQuery, setMessagesQuery] = useState('');
 
   const { status, statusIsError, logStatus } = useStatusMessage();
 
@@ -424,7 +427,7 @@ export function useHomeworkPrinter() {
     setMessagesBusy(true);
     logStatus('Téléchargement des messages...');
     try {
-      const response = await clientRef.current.getMessages(eleveId);
+      const response = await clientRef.current.getMessages(eleveId, messagesQueryRef.current);
       if (isSessionExpiredError(response)) {
         handleSessionExpired();
         return;
@@ -441,6 +444,34 @@ export function useHomeworkPrinter() {
       setMessagesBusy(false);
     }
   }, [clientRef, handleSessionExpired, logStatus, messagesBusy, selectedEleveIdRef]);
+
+  const searchMessages = useCallback(async (searchQuery) => {
+    const eleveId = selectedEleveIdRef.current;
+    if (!eleveId) return;
+    const requestId = ++messagesSearchRef.current;
+    const trimmedQuery = searchQuery.trim();
+    messagesQueryRef.current = trimmedQuery;
+    setMessagesQuery(trimmedQuery);
+    setMessagesBusy(true);
+    try {
+      const response = await clientRef.current.getMessages(eleveId, trimmedQuery);
+      if (requestId !== messagesSearchRef.current) return;
+      if (isSessionExpiredError(response)) {
+        handleSessionExpired();
+        return;
+      }
+      if (!response || response.code !== 200 || !response.data) {
+        throw new Error(response?.message || 'Erreur lors de la recherche des messages.');
+      }
+      setMessages(Array.isArray(response.data.messages?.received) ? response.data.messages.received : []);
+    } catch (error) {
+      if (requestId !== messagesSearchRef.current) return;
+      if (isSessionExpiredError({ message: error.message })) handleSessionExpired();
+      else logStatus(`Erreur : ${error.message}`, true);
+    } finally {
+      if (requestId === messagesSearchRef.current) setMessagesBusy(false);
+    }
+  }, [clientRef, handleSessionExpired, logStatus, selectedEleveIdRef]);
 
   const loadMessage = useCallback(async (messageId) => {
     const eleveId = selectedEleveIdRef.current;
@@ -672,7 +703,9 @@ export function useHomeworkPrinter() {
     gradesBusy,
     messages,
     messagesBusy,
+    messagesQuery,
     retrieveMessages,
+    searchMessages,
     loadMessage,
     viewMode,
     switchView,

@@ -124,6 +124,11 @@
 }
 
 .action-icon-btn:hover:not(:disabled),
+.print-btn[aria-pressed='true'] {
+  background: var(--primary);
+  color: var(--primary-contrast);
+}
+
 .print-btn:hover,
 .action-icon-btn:focus-visible,
 .print-btn:focus-visible {

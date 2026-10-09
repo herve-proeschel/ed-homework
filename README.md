@@ -33,6 +33,7 @@ Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou
 * **Messages reçus (« Mes Messages ») :**
   * Lien en tête du menu, au-dessus de la sélection des élèves.
   * Liste des messages reçus (100 maximum, du plus récent au plus ancien) au style Material Design : avatar avec l'initiale de l'expéditeur, expéditeur, objet, date, et trombone lorsqu'une pièce jointe existe. Les messages non lus sont en gras.
+  * Bouton loupe pour filtrer les messages : une zone de recherche s'ouvre et la liste est filtrée côté ÉcoleDirecte (paramètre `query`) après une courte pause de saisie.
   * Un clic déplie la carte avec une animation et charge le contenu du message, mis en cache pour la session.
   * Les pièces jointes sont affichées sous forme de puces et se téléchargent via le relais Cloudflare, comme les documents des devoirs.
   * Pas d'impression pour cette vue.

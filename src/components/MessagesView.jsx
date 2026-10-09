@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { decodeBase64Utf8 } from '../services/edClient';
 import {
   getHomeworkDocumentFilename,
@@ -31,15 +31,55 @@ function getInitial(name) {
   return (name.match(/\p{L}/u)?.[0] || '?').toUpperCase();
 }
 
-export default function MessagesView({ messages, onLoadMessage, onOpenDocument }) {
+const SEARCH_DEBOUNCE_MS = 400;
+
+export default function MessagesView({ messages, query = '', searchOpen = false, onCloseSearch, onSearch, onLoadMessage, onOpenDocument }) {
   const [expandedId, setExpandedId] = useState(null);
   const [details, setDetails] = useState({});
+  const [searchText, setSearchText] = useState(query);
+  const inputRef = useRef(null);
+  const lastSearchRef = useRef(query);
+
+  useEffect(() => {
+    if (searchText.trim() === lastSearchRef.current) return undefined;
+    const timer = window.setTimeout(() => {
+      lastSearchRef.current = searchText.trim();
+      onSearch?.(searchText);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [onSearch, searchText]);
+
+  useEffect(() => {
+    if (searchOpen) inputRef.current?.focus();
+  }, [searchOpen]);
 
   if (!messages) return null;
-  if (messages.length === 0) {
-    return <div id="messagesView"><p className="messages-empty">Aucun message reçu.</p></div>;
-  }
 
+  const closeSearch = () => {
+    onCloseSearch?.();
+    setSearchText('');
+  };
+
+  const toolbar = searchOpen ? (
+    <div className="messages-toolbar">
+      <div className="messages-search" role="search">
+        <svg className="messages-search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" /></svg>
+        <input
+          ref={inputRef}
+          type="search"
+          className="messages-search-input"
+          value={searchText}
+          placeholder="Rechercher dans les messages"
+          aria-label="Rechercher dans les messages"
+          onChange={(event) => setSearchText(event.target.value)}
+          onKeyDown={(event) => { if (event.key === 'Escape') closeSearch(); }}
+        />
+        <button type="button" className="messages-icon-btn" onClick={closeSearch} aria-label="Fermer la recherche" title="Fermer la recherche">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" /></svg>
+        </button>
+      </div>
+    </div>
+  ) : null;
   const toggleMessage = async (message) => {
     if (expandedId === message.id) {
       setExpandedId(null);
@@ -59,7 +99,12 @@ export default function MessagesView({ messages, onLoadMessage, onOpenDocument }
   };
 
   return (
-    <ul id="messagesView" aria-label="Messages reçus">
+    <div id="messagesView">
+      {toolbar}
+      {messages.length === 0 ? (
+        <p className="messages-empty">{query ? 'Aucun message ne correspond à la recherche.' : 'Aucun message reçu.'}</p>
+      ) : (
+    <ul className="messages-list" aria-label="Messages reçus">
       {messages.map((message) => {
         const isExpanded = expandedId === message.id;
         const isUnread = message.read === false;
@@ -137,5 +182,7 @@ export default function MessagesView({ messages, onLoadMessage, onOpenDocument }
         );
       })}
     </ul>
+      )}
+    </div>
   );
 }

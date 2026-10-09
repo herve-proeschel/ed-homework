@@ -252,9 +252,21 @@ export class EdClient {
     return this.apiCall(`v3/eleves/${eleveId}/notes.awp?verbe=get`, 'POST', { anneeScolaire: '' });
   }
 
-  async getMessages(eleveId) {
-    const query = 'force=false&typeRecuperation=received&idClasseur=0&orderBy=date&order=desc&query=&onlyRead=&page=0&itemsPerPage=100&getAll=0&verbe=get';
-    return this.apiCall(`v3/eleves/${eleveId}/messages.awp?${query}`, 'POST', {});
+  async getMessages(eleveId, searchQuery = '') {
+    const params = new URLSearchParams({
+      force: searchQuery ? 'true' : 'false',
+      typeRecuperation: 'received',
+      idClasseur: '0',
+      orderBy: 'date',
+      order: 'desc',
+      query: searchQuery,
+      onlyRead: '',
+      page: '0',
+      itemsPerPage: '100',
+      getAll: '0',
+      verbe: 'get',
+    });
+    return this.apiCall(`v3/eleves/${eleveId}/messages.awp?${params.toString()}`, 'POST', {});
   }
 
   async getMessage(eleveId, messageId) {

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import StatusMessage from './components/StatusMessage';
 import QcmModal from './components/QcmModal';
@@ -21,6 +21,7 @@ const VIEW_EMPTY_MESSAGES = {
 
 function AppContent() {
   const touchStartRef = useRef(null);
+  const [messagesSearchOpen, setMessagesSearchOpen] = useState(false);
   const {
     username,
     setUsername,
@@ -45,6 +46,8 @@ function AppContent() {
     gradesBusy,
     messages,
     messagesBusy,
+    messagesQuery,
+    searchMessages,
     retrieveMessages,
     loadMessage,
     viewMode,
@@ -132,6 +135,8 @@ function AppContent() {
             hasData={(viewMode === 'grades' && Boolean(grades)) || (viewMode === 'messages' && Boolean(messages))}
             mode={viewMode}
             busy={viewMode === 'schedule' ? scheduleBusy : viewMode === 'grades' ? gradesBusy : viewMode === 'messages' ? messagesBusy : busy && (!eleveModal || eleveModal.confirmed)}
+            onSearch={viewMode === 'messages' ? () => setMessagesSearchOpen((open) => !open) : undefined}
+            searchActive={viewMode === 'messages' && messagesSearchOpen}
             compact
           />
         </div>
@@ -156,7 +161,7 @@ function AppContent() {
 
       {viewMode === 'schedule' && <ScheduleView events={scheduleEvents} hasMore={hasMoreSchedule} loading={scheduleBusy} onLoadMore={retrieveSchedule} />}
       {viewMode === 'grades' && <GradesView grades={grades} />}
-      {viewMode === 'messages' && <MessagesView messages={messages} onLoadMessage={loadMessage} onOpenDocument={openDocument} />}
+      {viewMode === 'messages' && <MessagesView messages={messages} query={messagesQuery} searchOpen={messagesSearchOpen} onCloseSearch={() => setMessagesSearchOpen(false)} onSearch={searchMessages} onLoadMessage={loadMessage} onOpenDocument={openDocument} />}
       {viewMode === 'homework' && (
         <HomeWorkView
           days={printDays}
