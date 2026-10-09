@@ -273,9 +273,14 @@
 }
 
 .messages-toolbar {
+  position: sticky;
+  top: var(--messages-sticky-top, 0px);
+  z-index: 10;
   display: flex;
   justify-content: flex-end;
-  min-height: 48px;
+  min-height: 56px;
+  padding: 4px 0;
+  background: var(--bg);
 }
 
 .messages-icon-btn {
