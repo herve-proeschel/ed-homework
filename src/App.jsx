@@ -10,11 +10,13 @@ import { AppProvider } from './context/AppProvider';
 import { useAppContext } from './context/appContext';
 import ScheduleView from './components/ScheduleView';
 import GradesView from './components/GradesView';
+import MessagesView from './components/MessagesView';
 
 const VIEW_EMPTY_MESSAGES = {
   homework: 'Téléchargez les devoirs.',
   schedule: 'Téléchargez l’emploi du temps.',
   grades: 'Téléchargez les notes.',
+  messages: 'Téléchargez les messages.',
 };
 
 function AppContent() {
@@ -41,6 +43,10 @@ function AppContent() {
     hasMoreSchedule,
     grades,
     gradesBusy,
+    messages,
+    messagesBusy,
+    retrieveMessages,
+    loadMessage,
     viewMode,
     switchView,
     selectView,
@@ -120,12 +126,12 @@ function AppContent() {
       {isLoggedIn && (
         <div className="app-floating-actions">
           <PrintAction
-            onRetrieve={viewMode === 'schedule' ? retrieveSchedule : viewMode === 'grades' ? retrieveGrades : eleveModal && !eleveModal.confirmed ? confirmEleve : run}
+            onRetrieve={viewMode === 'schedule' ? retrieveSchedule : viewMode === 'grades' ? retrieveGrades : viewMode === 'messages' ? retrieveMessages : eleveModal && !eleveModal.confirmed ? confirmEleve : run}
             onPrint={printHomework}
-            canPrint={viewMode === 'grades' ? false : Boolean(viewMode === 'schedule' ? scheduleEvents.length : printDays?.length)}
-            hasData={viewMode === 'grades' && Boolean(grades)}
+            canPrint={viewMode === 'grades' || viewMode === 'messages' ? false : Boolean(viewMode === 'schedule' ? scheduleEvents.length : printDays?.length)}
+            hasData={(viewMode === 'grades' && Boolean(grades)) || (viewMode === 'messages' && Boolean(messages))}
             mode={viewMode}
-            busy={viewMode === 'schedule' ? scheduleBusy : viewMode === 'grades' ? gradesBusy : busy && (!eleveModal || eleveModal.confirmed)}
+            busy={viewMode === 'schedule' ? scheduleBusy : viewMode === 'grades' ? gradesBusy : viewMode === 'messages' ? messagesBusy : busy && (!eleveModal || eleveModal.confirmed)}
             compact
           />
         </div>
@@ -150,6 +156,7 @@ function AppContent() {
 
       {viewMode === 'schedule' && <ScheduleView events={scheduleEvents} hasMore={hasMoreSchedule} loading={scheduleBusy} onLoadMore={retrieveSchedule} />}
       {viewMode === 'grades' && <GradesView grades={grades} />}
+      {viewMode === 'messages' && <MessagesView messages={messages} onLoadMessage={loadMessage} />}
       {viewMode === 'homework' && (
         <HomeWorkView
           days={printDays}

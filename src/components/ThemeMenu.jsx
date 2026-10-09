@@ -17,6 +17,7 @@ const VIEW_OPTIONS = [
 const MENU_ICONS = {
   homework: <><path d="M6 3.5h9l3 3V20.5H6z" /><path d="M15 3.5v4h3M9 12h6M9 16h6" /></>,
   schedule: <><rect x="4" y="5.5" width="16" height="15" rx="1.5" /><path d="M8 3.5v4M16 3.5v4M4 10h16M8 13.5h.01M12 13.5h.01M16 13.5h.01M8 17h.01M12 17h.01" /></>,
+  messages: <><rect x="3.5" y="5.5" width="17" height="13" rx="1.5" /><path d="M4 7l8 6 8-6" /></>,
   grades: <><path d="M5 19.5V11M10 19.5V7M15 19.5V13M20 19.5V4.5" /></>,
   system: <><rect x="3.5" y="4" width="17" height="12" rx="1.5" /><path d="M8 20h8M12 16v4" /></>,
   light: <><circle cx="12" cy="12" r="3.5" /><path d="M12 2.5v2M12 19.5v2M21.5 12h-2M4.5 12h-2M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4M18.7 18.7l-1.4-1.4M6.7 6.7L5.3 5.3" /></>,
@@ -119,7 +120,7 @@ export default function ThemeMenu({ viewMode, onSelectView, title, eleveModal, o
   };
 
   const hasMultipleEleves = (eleveModal?.eleves?.length || 0) > 1;
-  const eleveCount = hasMultipleEleves ? eleveModal.eleves.length : 0;
+  const eleveCount = (hasMultipleEleves ? eleveModal.eleves.length : 0) + 1;
 
   return (
     <div className="theme-menu" ref={menuRef}>
@@ -151,6 +152,24 @@ export default function ThemeMenu({ viewMode, onSelectView, title, eleveModal, o
           onKeyDown={handleMenuKeyDown}
         >
           <p className="theme-menu-drawer-title">{title}</p>
+          <button
+            type="button"
+            role="menuitem"
+            aria-current={viewMode === 'messages' ? 'page' : undefined}
+            className="theme-option"
+            ref={(element) => { menuItemRefs.current[0] = element; }}
+            onClick={() => {
+              onSelectView('messages');
+              closeMenu(true);
+            }}
+          >
+            <span className="theme-option-label">
+              <MenuIcon name="messages" />
+              <span>Mes Messages</span>
+            </span>
+            {viewMode === 'messages' && <span className="theme-option-check" aria-hidden="true">✓</span>}
+          </button>
+          <div className="theme-menu-divider" />
           {hasMultipleEleves && (
             <>
               <section className="theme-menu-student" aria-labelledby="theme-menu-student-title">
@@ -159,6 +178,7 @@ export default function ThemeMenu({ viewMode, onSelectView, title, eleveModal, o
                   eleveModal={eleveModal}
                   onSelect={onSelectEleve}
                   menuItemRefs={menuItemRefs}
+                  itemOffset={1}
                 />
               </section>
               <div className="theme-menu-divider" />

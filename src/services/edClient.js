@@ -252,6 +252,15 @@ export class EdClient {
     return this.apiCall(`v3/eleves/${eleveId}/notes.awp?verbe=get`, 'POST', { anneeScolaire: '' });
   }
 
+  async getMessages(eleveId) {
+    const query = 'force=false&typeRecuperation=received&idClasseur=0&orderBy=date&order=desc&query=&onlyRead=&page=0&itemsPerPage=100&getAll=0&verbe=get';
+    return this.apiCall(`v3/eleves/${eleveId}/messages.awp?${query}`, 'POST', {});
+  }
+
+  async getMessage(eleveId, messageId) {
+    return this.apiCall(`v3/eleves/${eleveId}/messages/${messageId}.awp?verbe=get&mode=destinataire`, 'POST', {});
+  }
+
   async getSchedule(eleveId, dateDebut, dateFin) {
     return this.apiCall(`v3/E/${eleveId}/emploidutemps.awp?verbe=get`, 'POST', {
       dateDebut,

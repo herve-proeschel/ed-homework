@@ -79,6 +79,18 @@ function routeInfo(request, url) {
     && url.searchParams.get("verbe") === "get" && isAllowedQuery(url, ["verbe", "v"])) {
     return { kind: "grades" };
   }
+  if (method === "POST" && /^\/v3\/eleves\/\d+\/messages\.awp$/i.test(path)
+    && url.searchParams.get("verbe") === "get"
+    && url.searchParams.get("typeRecuperation") === "received"
+    && isAllowedQuery(url, ["force", "typeRecuperation", "idClasseur", "orderBy", "order", "query", "onlyRead", "page", "itemsPerPage", "getAll", "verbe", "v"])) {
+    return { kind: "messages" };
+  }
+  if (method === "POST" && /^\/v3\/eleves\/\d+\/messages\/\d+\.awp$/i.test(path)
+    && url.searchParams.get("verbe") === "get"
+    && url.searchParams.get("mode") === "destinataire"
+    && isAllowedQuery(url, ["verbe", "mode", "v"])) {
+    return { kind: "message" };
+  }
   return null;
 }
 

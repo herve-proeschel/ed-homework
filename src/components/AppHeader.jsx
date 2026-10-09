@@ -1,7 +1,7 @@
 import ThemeMenu from './ThemeMenu';
 import LoggedUser from './LoggedUser';
 
-const VIEW_TITLES = { homework: 'Cahier de Texte', schedule: 'Emploi du temps', grades: 'Notes' };
+const VIEW_TITLES = { homework: 'Cahier de Texte', schedule: 'Emploi du temps', grades: 'Notes', messages: 'Mes Messages' };
 
 function getEleveFirstName(eleve) {
   return String(eleve?.prenom || '').trim();
@@ -21,7 +21,9 @@ export default function AppHeader({
 }) {
   const eleveFirstName = getEleveFirstName(selectedEleve);
   const hasManagedEleves = (eleveModal?.eleves?.length || 0) > 0;
-  const title = `${VIEW_TITLES[viewMode]}${hasManagedEleves && eleveFirstName ? ` de ${eleveFirstName}` : ''}`;
+  const title = viewMode === 'messages'
+    ? VIEW_TITLES.messages
+    : `${VIEW_TITLES[viewMode]}${hasManagedEleves && eleveFirstName ? ` de ${eleveFirstName}` : ''}`;
 
   return (
     <div className={`app-header${isLoggedIn ? ' app-header--logged-in' : ''}`}>

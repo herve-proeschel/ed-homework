@@ -1,4 +1,4 @@
-const LABELS = { homework: 'devoirs', schedule: 'emploi du temps', grades: 'notes' };
+const LABELS = { homework: 'devoirs', schedule: 'emploi du temps', grades: 'notes', messages: 'messages' };
 
 export default function PrintAction({ onRetrieve, onPrint, canPrint, hasData = false, compact = false, mode = 'homework', busy = false }) {
   const label = LABELS[mode] || LABELS.homework;
