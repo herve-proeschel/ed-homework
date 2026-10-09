@@ -148,7 +148,12 @@ export function buildGradesReport(grades, periodCode) {
 
   const subjects = allSubjects
     .filter((subject) => subject.notes.length)
-    .map((subject) => ({ ...subject, previousAverage: previousByCode.get(subject.code)?.average ?? null }));
+    .map((subject) => ({ ...subject, previousAverage: previousByCode.get(subject.code)?.average ?? null }))
+    .sort((a, b) => {
+      if (a.average === null) return b.average === null ? 0 : 1;
+      if (b.average === null) return -1;
+      return b.average - a.average;
+    });
 
   return {
     period,
@@ -162,4 +167,3 @@ export function buildGradesReport(grades, periodCode) {
     subjects,
   };
 }
-

@@ -42,7 +42,31 @@ describe('grades utils', () => {
     expect(report.general.previousAverage).toBe(10);
     expect(buildGradesReport(grades, 'A001').previousPeriod).toBeNull();
   });
-});
 
+  it('orders subjects by descending average and places unavailable averages last', () => {
+    const grades = {
+      periodes: [{
+        codePeriode: 'A001',
+        periode: 'Trimestre 1',
+        ensembleMatieres: {
+          disciplines: ['MATHS', 'ITA2', 'FR', 'HISTOIRE'].map((code) => ({
+            codeMatiere: code,
+            discipline: code,
+            coef: 1,
+          })),
+        },
+      }],
+      notes: [
+        note('2026-09-01', '12', { codeMatiere: 'MATHS', codePeriode: 'A001' }),
+        note('2026-09-01', '18', { codeMatiere: 'ITA2', codePeriode: 'A001' }),
+        note('2026-09-01', '15', { codeMatiere: 'FR', codePeriode: 'A001' }),
+        note('2026-09-01', 'Abs', { codeMatiere: 'HISTOIRE', codePeriode: 'A001' }),
+      ],
+    };
+
+    expect(buildGradesReport(grades, 'A001').subjects.map((subject) => subject.code))
+      .toEqual(['ITA2', 'FR', 'MATHS', 'HISTOIRE']);
+  });
+});
 
 

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { decodeBase64Utf8 } from '../services/edClient';
 import { formatDay } from '../utils/formatDay';
 import {
@@ -42,7 +42,28 @@ function DocumentLinks({ documents, onOpenDocument }) {
 }
 
 export default function HomeWorkView({ days, onOpenDocument, onLoadPreviousWeek }) {
+  const viewRef = useRef(null);
   const touchStartRef = useRef(null);
+
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return undefined;
+
+    const preventPullToRefresh = (event) => {
+      const start = touchStartRef.current;
+      const touch = event.touches[0];
+      if (!start || !touch || !start.atTop) return;
+
+      const deltaX = touch.clientX - start.x;
+      const deltaY = touch.clientY - start.y;
+      if (deltaY > 0 && deltaY > Math.abs(deltaX)) {
+        event.preventDefault();
+      }
+    };
+
+    view.addEventListener('touchmove', preventPullToRefresh, { passive: false });
+    return () => view.removeEventListener('touchmove', preventPullToRefresh);
+  }, [days]);
 
   const handleTouchStart = (event) => {
     const touch = event.changedTouches[0];
@@ -50,7 +71,12 @@ export default function HomeWorkView({ days, onOpenDocument, onLoadPreviousWeek 
       touchStartRef.current = null;
       return;
     }
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    const scrollTop = document.scrollingElement?.scrollTop ?? window.scrollY;
+    touchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      atTop: scrollTop <= 0,
+    };
   };
 
   const handleTouchEnd = (event) => {
@@ -62,13 +88,14 @@ export default function HomeWorkView({ days, onOpenDocument, onLoadPreviousWeek 
     const deltaX = touch.clientX - start.x;
     const deltaY = touch.clientY - start.y;
     const swipeThreshold = 50;
-    if (deltaY < swipeThreshold || deltaY <= Math.abs(deltaX)) return;
+    const scrollTop = document.scrollingElement?.scrollTop ?? window.scrollY;
+    if (!start.atTop || scrollTop > 0 || deltaY < swipeThreshold || deltaY <= Math.abs(deltaX)) return;
     onLoadPreviousWeek?.();
   };
 
   if (!days) return null;
   return (
-    <div id="printView" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+    <div ref={viewRef} id="printView" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {days.map((day) => {
         const subjects = (day.matieres || []).filter((subject) => {
           const session = getHomeworkSession(subject);
