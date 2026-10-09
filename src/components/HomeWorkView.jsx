@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { decodeBase64Utf8 } from '../services/edClient';
 import { formatDay } from '../utils/formatDay';
 import {
@@ -40,10 +41,34 @@ function DocumentLinks({ documents, onOpenDocument }) {
   );
 }
 
-export default function HomeWorkView({ days, onOpenDocument }) {
+export default function HomeWorkView({ days, onOpenDocument, onLoadPreviousWeek }) {
+  const touchStartRef = useRef(null);
+
+  const handleTouchStart = (event) => {
+    const touch = event.changedTouches[0];
+    if (!touch || event.target?.closest?.('a, button, input, textarea, select, [role="dialog"], .theme-menu-popover')) {
+      touchStartRef.current = null;
+      return;
+    }
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = (event) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    const touch = event.changedTouches[0];
+    if (!start || !touch) return;
+
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    const swipeThreshold = 50;
+    if (deltaY < swipeThreshold || deltaY <= Math.abs(deltaX)) return;
+    onLoadPreviousWeek?.();
+  };
+
   if (!days) return null;
   return (
-    <div id="printView">
+    <div id="printView" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {days.map((day) => {
         const subjects = (day.matieres || []).filter((subject) => {
           const session = getHomeworkSession(subject);

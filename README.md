@@ -15,6 +15,7 @@ Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou
   * Sélecteur d'élève avec affichage du nom et de la photo lorsque ces données sont fournies par ÉcoleDirecte.
 * **Consultation du cahier de texte :**
   * Récupération des devoirs des dates futures, avec progression affichée pendant la collecte.
+  * Chaque glissement vers le bas dans la vue récupère une semaine supplémentaire vers le passé.
   * Décodage automatique du descriptif des devoirs (données Base64 + assainissement HTML).
   * Affichage des documents associés aux consignes et au contenu de séance via le relais Cloudflare.
   * Statut d'avancement (fait / à faire).

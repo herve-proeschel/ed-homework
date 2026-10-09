@@ -46,6 +46,7 @@ function AppContent() {
     selectView,
     retrieveSchedule,
     retrieveGrades,
+    retrievePreviousHomework,
     openDocument,
     run,
     printHomework,
@@ -149,7 +150,13 @@ function AppContent() {
 
       {viewMode === 'schedule' && <ScheduleView events={scheduleEvents} hasMore={hasMoreSchedule} loading={scheduleBusy} onLoadMore={retrieveSchedule} />}
       {viewMode === 'grades' && <GradesView grades={grades} />}
-      {viewMode === 'homework' && <HomeWorkView days={printDays} onOpenDocument={openDocument} />}
+      {viewMode === 'homework' && (
+        <HomeWorkView
+          days={printDays}
+          onOpenDocument={openDocument}
+          onLoadPreviousWeek={retrievePreviousHomework}
+        />
+      )}
     </div>
   );
 }
