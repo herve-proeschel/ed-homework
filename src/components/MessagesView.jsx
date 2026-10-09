@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { decodeBase64Utf8 } from '../services/edClient';
 import {
   getHomeworkDocumentFilename,
@@ -32,6 +32,19 @@ function getInitial(name) {
 }
 
 const SEARCH_DEBOUNCE_MS = 400;
+const SPLIT_QUERY = '(min-width: 900px) and (orientation: landscape)';
+
+function useSplitLayout() {
+  const [split, setSplit] = useState(() => window.matchMedia(SPLIT_QUERY).matches);
+  useEffect(() => {
+    const media = window.matchMedia(SPLIT_QUERY);
+    const update = () => setSplit(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  return split;
+}
 
 export default function MessagesView({ messages, query = '', searchOpen = false, onCloseSearch, onSearch, onLoadMessage, onOpenDocument }) {
   const [expandedId, setExpandedId] = useState(null);
@@ -40,6 +53,35 @@ export default function MessagesView({ messages, query = '', searchOpen = false,
   const inputRef = useRef(null);
   const toolbarRef = useRef(null);
   const lastSearchRef = useRef(query);
+  const isSplit = useSplitLayout();
+  const detailsRef = useRef(details);
+  detailsRef.current = details;
+  const loadMessageRef = useRef(onLoadMessage);
+  loadMessageRef.current = onLoadMessage;
+
+  const loadDetail = async (id) => {
+    const current = detailsRef.current[id];
+    if (current && !current.error) return;
+    setDetails((previous) => ({ ...previous, [id]: { loading: true } }));
+    try {
+      const data = await loadMessageRef.current(id);
+      if (!data) return;
+      setDetails((previous) => ({ ...previous, [id]: { data } }));
+    } catch (error) {
+      setDetails((previous) => ({ ...previous, [id]: { error: error.message } }));
+    }
+  };
+  const loadDetailRef = useRef(loadDetail);
+  loadDetailRef.current = loadDetail;
+
+  // En mode scindé, ouvre le premier message quand la liste est chargée
+  useEffect(() => {
+    if (!isSplit || !messages?.length) return;
+    if (messages.some((message) => message.id === expandedId)) return;
+    const first = messages[0];
+    setExpandedId(first.id);
+    loadDetailRef.current(first.id);
+  }, [isSplit, messages, expandedId]);
 
   useEffect(() => {
     if (searchText.trim() === lastSearchRef.current) return undefined;
@@ -95,106 +137,117 @@ export default function MessagesView({ messages, query = '', searchOpen = false,
   ) : null;
   const toggleMessage = async (message) => {
     if (expandedId === message.id) {
-      setExpandedId(null);
+      if (!isSplit) setExpandedId(null);
       return;
     }
     setExpandedId(message.id);
-    if (details[message.id] && !details[message.id].error) return;
-
-    setDetails((previous) => ({ ...previous, [message.id]: { loading: true } }));
-    try {
-      const data = await onLoadMessage(message.id);
-      if (!data) return;
-      setDetails((previous) => ({ ...previous, [message.id]: { data } }));
-    } catch (error) {
-      setDetails((previous) => ({ ...previous, [message.id]: { error: error.message } }));
-    }
+    await loadDetail(message.id);
   };
 
+  const renderBody = (message) => {
+    const detail = details[message.id];
+    if (!detail) return null;
+    const files = detail.data?.files || message.files || [];
+    const bodyHtml = decodeBase64Utf8(detail.data?.content ?? '');
+    return (
+      <div className="message-body">
+        {detail.loading && <p className="messages-empty">Chargement du message...</p>}
+        {detail.error && <p className="messages-empty">Erreur : {detail.error}</p>}
+        {detail.data && (
+          bodyHtml
+            // eslint-disable-next-line react/no-danger -- rich text markup from API data, not user input
+            ? <div className="message-content" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+            : <em>Message vide</em>
+        )}
+        {detail.data && files.length > 0 && (
+          <div className="message-attachments">
+            {files.map((file) => {
+              const url = getHomeworkDocumentUrl(file);
+              const label = getHomeworkDocumentLabel(file);
+              return (
+                <a
+                  className="message-chip"
+                  key={file.id || file.libelle}
+                  href={url || undefined}
+                  download={getHomeworkDocumentFilename(file)}
+                  onClick={(event) => {
+                    if (!onOpenDocument || !url) return;
+                    event.preventDefault();
+                    onOpenDocument(file);
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d={PAPERCLIP_PATH} /></svg>
+                  <span>{label}</span>
+                </a>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const selectedMessage = isSplit ? messages.find((message) => message.id === expandedId) : null;
   return (
-    <div id="messagesView">
+    <div id="messagesView" className={isSplit ? 'messages-split' : undefined}>
       {toolbar}
       {messages.length === 0 ? (
         <p className="messages-empty">{query ? 'Aucun message ne correspond à la recherche.' : 'Aucun message reçu.'}</p>
       ) : (
-    <ul className="messages-list" aria-label="Messages reçus">
-      {messages.map((message) => {
-        const isExpanded = expandedId === message.id;
-        const isUnread = message.read === false;
-        const detail = details[message.id];
-        const files = detail?.data?.files || message.files || [];
-        const sender = getSenderName(message);
-        const bodyHtml = decodeBase64Utf8(detail?.data?.content ?? '');
-        return (
-          <li className={`message-card${isExpanded ? ' message-card--open' : ''}${isUnread ? ' message-card--unread' : ''}`} key={message.id}>
-            <button
-              type="button"
-              className="message-header"
-              onClick={() => toggleMessage(message)}
-              aria-expanded={isExpanded}
-            >
-              <span className="message-avatar" aria-hidden="true">{getInitial(sender)}</span>
-              <span className="message-text">
-                <span className="message-sender">{sender}</span>
-                <span className="message-subject">{message.subject || '(Sans objet)'}</span>
-                <span className="message-date">{formatMessageDate(message.date)}</span>
-              </span>
-              <span className="message-trailing" aria-hidden="true">
-                {files.length > 0 && (
-                  <svg className="message-attachment-icon" viewBox="0 0 24 24" focusable="false">
-                    <path d={PAPERCLIP_PATH} />
-                  </svg>
-                )}
-                <svg className="message-chevron" viewBox="0 0 24 24" focusable="false">
-                  <path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z" />
-                </svg>
-              </span>
-              {files.length > 0 && <span className="visually-hidden">Pièce jointe</span>}
-            </button>
-            <div className="message-collapse" inert={!isExpanded} aria-hidden={!isExpanded}>
-              <div className="message-collapse-inner">
-                {detail && (
-                  <div className="message-body">
-                    {detail.loading && <p className="messages-empty">Chargement du message...</p>}
-                    {detail.error && <p className="messages-empty">Erreur : {detail.error}</p>}
-                    {detail.data && (
-                      bodyHtml
-                        // eslint-disable-next-line react/no-danger -- rich text markup from API data, not user input
-                        ? <div className="message-content" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
-                        : <em>Message vide</em>
-                    )}
-                    {detail.data && files.length > 0 && (
-                      <div className="message-attachments">
-                        {files.map((file) => {
-                          const url = getHomeworkDocumentUrl(file);
-                          const label = getHomeworkDocumentLabel(file);
-                          return (
-                            <a
-                              className="message-chip"
-                              key={file.id || file.libelle}
-                              href={url || undefined}
-                              download={getHomeworkDocumentFilename(file)}
-                              onClick={(event) => {
-                                if (!onOpenDocument || !url) return;
-                                event.preventDefault();
-                                onOpenDocument(file);
-                              }}
-                            >
-                              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d={PAPERCLIP_PATH} /></svg>
-                              <span>{label}</span>
-                            </a>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+        <div className="messages-layout">
+          <ul className="messages-list" aria-label="Messages reçus">
+            {messages.map((message) => {
+              const isExpanded = expandedId === message.id;
+              const isUnread = message.read === false;
+              const files = details[message.id]?.data?.files || message.files || [];
+              const sender = getSenderName(message);
+              return (
+                <li className={`message-card${isExpanded ? ' message-card--open' : ''}${isUnread ? ' message-card--unread' : ''}`} key={message.id}>
+                  <button
+                    type="button"
+                    className="message-header"
+                    onClick={() => toggleMessage(message)}
+                    aria-expanded={isExpanded}
+                  >
+                    <span className="message-avatar" aria-hidden="true">{getInitial(sender)}</span>
+                    <span className="message-text">
+                      <span className="message-sender">{sender}</span>
+                      <span className="message-subject">{message.subject || '(Sans objet)'}</span>
+                      <span className="message-date">{formatMessageDate(message.date)}</span>
+                    </span>
+                    <span className="message-trailing" aria-hidden="true">
+                      {files.length > 0 && (
+                        <svg className="message-attachment-icon" viewBox="0 0 24 24" focusable="false">
+                          <path d={PAPERCLIP_PATH} />
+                        </svg>
+                      )}
+                      <svg className="message-chevron" viewBox="0 0 24 24" focusable="false">
+                        <path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z" />
+                      </svg>
+                    </span>
+                    {files.length > 0 && <span className="visually-hidden">Pièce jointe</span>}
+                  </button>
+                  {!isSplit && (
+                    <div className="message-collapse" inert={!isExpanded} aria-hidden={!isExpanded}>
+                      <div className="message-collapse-inner">{renderBody(message)}</div>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          {isSplit && (
+            <section className="message-detail" aria-label="Message ouvert">
+              {selectedMessage && (
+                <>
+                  <h2 className="message-detail-subject">{selectedMessage.subject || '(Sans objet)'}</h2>
+                  <p className="message-detail-meta">{getSenderName(selectedMessage)} · {formatMessageDate(selectedMessage.date)}</p>
+                  {renderBody(selectedMessage)}
+                </>
+              )}
+            </section>
+          )}
+        </div>
       )}
     </div>
   );
