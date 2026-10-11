@@ -1,0 +1,991 @@
+/* Styles pour l'intégration Gemini BYOK et l'aide aux devoirs */
+
+.gemini-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 48%);
+  backdrop-filter: blur(2px);
+}
+
+.gemini-modal {
+  width: min(100%, 620px);
+  max-height: min(92vh, 760px);
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  border-radius: 28px;
+  background: var(--menu-surface);
+  color: var(--text);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 20%), 0 2px 6px rgb(0 0 0 / 12%);
+  overflow: hidden;
+}
+
+.gemini-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.gemini-modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+
+.gemini-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 0;
+  background: transparent;
+  color: var(--muted-text);
+  cursor: pointer;
+  font-size: 1.25rem;
+  transition: background-color 0.15s ease;
+}
+
+.gemini-modal-close:hover,
+.gemini-modal-close:focus-visible {
+  background: var(--state-hover);
+  color: var(--text);
+  outline: none;
+}
+
+.gemini-modal-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gemini-desc {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--muted-text);
+}
+
+.gemini-guide-step {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--subtle-bg);
+  border: 1px solid var(--border-soft);
+}
+
+.gemini-step-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.gemini-step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-contrast);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.gemini-external-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  width: fit-content;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.gemini-external-link:hover,
+.gemini-external-link:focus-visible {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  border-color: transparent;
+  outline: none;
+}
+
+.gemini-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.gemini-key-input {
+  width: 100%;
+  padding: 10px 72px 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-family: monospace;
+  box-sizing: border-box;
+}
+
+.gemini-key-input:focus {
+  outline: 2px solid var(--primary);
+  border-color: transparent;
+}
+
+.gemini-input-actions {
+  position: absolute;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gemini-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--muted-text);
+  cursor: pointer;
+  padding: 0;
+}
+
+.gemini-icon-btn:hover,
+.gemini-icon-btn:focus-visible {
+  background: var(--state-hover);
+  color: var(--text);
+  outline: none;
+}
+
+.gemini-status-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--subtle-bg);
+  border: 1px solid var(--border-soft);
+}
+
+.gemini-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.825rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 12px;
+  width: fit-content;
+}
+
+.gemini-status-pill.is-active {
+  background: #e6f4ea;
+  color: #137333;
+}
+
+[data-theme='dark'] .gemini-status-pill.is-active {
+  background: #0f381e;
+  color: #81c995;
+}
+
+.gemini-privacy-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--subtle-bg);
+  font-size: 0.8rem;
+  color: var(--muted-text);
+  line-height: 1.35;
+}
+
+.gemini-alert {
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.gemini-alert.is-error {
+  background: var(--error-container);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+.gemini-alert.is-success {
+  background: #e6f4ea;
+  color: #137333;
+}
+
+[data-theme='dark'] .gemini-alert.is-success {
+  background: #0f381e;
+  color: #81c995;
+}
+
+/* Carte d'information de Quota dépassé et statistiques d'usage */
+
+.gemini-quota-card {
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--card);
+  border: 1px solid #f9ab00;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
+}
+
+[data-theme='dark'] .gemini-quota-card {
+  border-color: #fdd663;
+  background: rgba(249, 171, 0, 0.08);
+}
+
+.gemini-quota-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.gemini-quota-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.gemini-quota-title {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.gemini-quota-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--muted-text);
+}
+
+.gemini-quota-countdown-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--subtle-bg);
+  border: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+
+.gemini-quota-timer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: var(--text);
+  font-weight: 500;
+  flex-wrap: wrap;
+}
+
+.gemini-quota-timer-val {
+  color: #d93025;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-theme='dark'] .gemini-quota-timer-val {
+  color: #f28b82;
+}
+
+.gemini-quota-timer-time {
+  font-size: 0.8rem;
+  color: var(--muted-text);
+  font-weight: 400;
+}
+
+.gemini-quota-timer.is-ready {
+  color: #137333;
+}
+
+[data-theme='dark'] .gemini-quota-timer.is-ready {
+  color: #81c995;
+}
+
+.gemini-quota-retry-btn {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.gemini-quota-stats {
+  padding-top: 8px;
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gemini-quota-stats-header {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.gemini-quota-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.gemini-quota-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--input-bg);
+  border: 1px solid var(--border-soft);
+}
+
+.gemini-quota-stat-label {
+  font-size: 0.75rem;
+  color: var(--muted-text);
+}
+
+.gemini-quota-stat-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.gemini-quota-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--muted-text);
+}
+
+.gemini-quota-raw-details {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--muted-text);
+  border: 1px dashed var(--border-soft);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.gemini-quota-raw-details summary {
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+}
+
+.gemini-quota-raw-pre {
+  margin-top: 6px;
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--text);
+  font-family: monospace;
+  font-size: 0.72rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.gemini-usage-stats-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--subtle-bg);
+  border: 1px solid var(--border-soft);
+}
+
+.gemini-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+/* Bouton Aide IA sur chaque carte de devoir */
+
+.homework-ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  background: var(--subtle-bg);
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-top: 8px;
+}
+
+.homework-ai-btn:hover,
+.homework-ai-btn:focus-visible {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  border-color: transparent;
+  outline: none;
+}
+
+.homework-ai-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+/* Bouton Synthèse de thème dans la barre de filtre */
+
+.homework-theme-ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--primary);
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.homework-theme-ai-btn:hover,
+.homework-theme-ai-btn:focus-visible {
+  filter: brightness(0.95);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+  outline: none;
+}
+
+.homework-theme-ai-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+/* Badge contextuel des séances analysées dans la modale IA */
+
+.homework-ai-timeline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--subtle-bg);
+  border: 1px solid var(--border-soft);
+  font-size: 0.8rem;
+  color: var(--muted-text);
+  line-height: 1.4;
+}
+
+/* Dialogue d'aide au devoir */
+
+.homework-ai-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.homework-ai-tab {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted-text);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.homework-ai-tab:hover,
+.homework-ai-tab:focus-visible {
+  background: var(--state-hover);
+  color: var(--text);
+  outline: none;
+}
+
+.homework-ai-tab.is-active {
+  background: var(--primary);
+  color: var(--primary-contrast);
+  border-color: var(--primary);
+  font-weight: 500;
+}
+
+.homework-ai-custom-input {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.homework-ai-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.homework-ai-textarea:focus {
+  outline: 2px solid var(--primary);
+  border-color: transparent;
+}
+
+.homework-ai-conversation {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding: 4px 6px 8px 0;
+  scroll-behavior: smooth;
+}
+
+.homework-ai-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.homework-ai-msg.is-user {
+  align-items: flex-end;
+}
+
+.homework-ai-msg-author {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted-text);
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.homework-ai-msg-author.is-user {
+  color: var(--primary);
+}
+
+.homework-ai-msg-bubble-user {
+  background: var(--primary);
+  color: var(--primary-contrast);
+  padding: 10px 14px;
+  border-radius: 16px 16px 4px 16px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  max-width: 85%;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+}
+
+.homework-ai-msg-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 2px;
+}
+
+.homework-ai-copy-btn {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.homework-ai-reply-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-soft);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.homework-ai-quick-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 6px;
+  max-width: 100%;
+  scrollbar-width: none;
+}
+
+.homework-ai-quick-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.homework-ai-chip {
+  padding: 5px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  background: var(--subtle-bg);
+  color: var(--text);
+  font-size: 0.775rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.homework-ai-chip:hover,
+.homework-ai-chip:focus-visible {
+  background: var(--state-hover);
+  border-color: var(--primary);
+  outline: none;
+}
+
+.homework-ai-reply-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.homework-ai-reply-textarea {
+  width: 100%;
+  min-height: 72px;
+  max-height: 160px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+  line-height: 1.45;
+}
+
+.homework-ai-reply-textarea:focus {
+  outline: 2px solid var(--primary);
+  border-color: transparent;
+}
+
+.homework-ai-reply-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.homework-ai-reply-hint {
+  font-size: 0.75rem;
+  color: var(--muted-text);
+  margin: 0;
+}
+
+.homework-ai-send-btn {
+  width: auto !important;
+  min-width: 130px;
+  height: 38px;
+  padding: 0 18px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 12px;
+  align-self: flex-end;
+}
+
+.homework-ai-response {
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--subtle-bg);
+  border: 1px solid var(--border-soft);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text);
+  overflow-wrap: break-word;
+}
+
+.homework-ai-response h1 {
+  margin: 14px 0 8px;
+  font-size: 1.15rem;
+  color: var(--primary);
+}
+
+.homework-ai-response h2 {
+  margin: 12px 0 6px;
+  font-size: 1.05rem;
+  color: var(--primary);
+}
+
+.homework-ai-response h3 {
+  margin: 12px 0 6px;
+  font-size: 1rem;
+  color: var(--primary);
+}
+
+.homework-ai-response h4 {
+  margin: 10px 0 4px;
+  font-size: 0.925rem;
+  font-weight: 600;
+}
+
+.homework-ai-response p {
+  margin: 0 0 8px;
+}
+
+.homework-ai-response li > p {
+  margin: 0 0 4px;
+}
+
+.homework-ai-response blockquote {
+  margin: 10px 0;
+  padding: 6px 14px;
+  border-left: 3px solid var(--primary);
+  background: var(--card);
+  border-radius: 0 8px 8px 0;
+  color: var(--muted-text);
+}
+
+.homework-ai-response pre {
+  margin: 10px 0;
+  padding: 10px 14px;
+  background: var(--card);
+  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  overflow-x: auto;
+}
+
+.homework-ai-response pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.homework-ai-response hr {
+  border: 0;
+  border-top: 1px solid var(--border-soft);
+  margin: 14px 0;
+}
+
+.homework-ai-response ul,
+.homework-ai-response ol {
+  margin: 6px 0 10px 22px;
+  padding: 0;
+}
+
+.homework-ai-response li {
+  margin-bottom: 6px;
+  line-height: 1.45;
+}
+
+/* Volets déroulants interactifs (Quiz & Masquage des réponses) */
+.homework-ai-response details {
+  margin: 12px 0;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: var(--card);
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.homework-ai-response details[open] {
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
+}
+
+.homework-ai-response summary {
+  padding: 10px 14px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--primary);
+  background: var(--subtle-bg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  user-select: none;
+  list-style: none;
+  transition: background-color 0.15s ease;
+}
+
+.homework-ai-response summary::-webkit-details-marker {
+  display: none;
+}
+
+.homework-ai-response summary::after {
+  content: '▾';
+  font-size: 0.95rem;
+  margin-left: auto;
+  transition: transform 0.2s ease;
+  line-height: 1;
+}
+
+.homework-ai-response details[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.homework-ai-response summary:hover,
+.homework-ai-response summary:focus-visible {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  outline: none;
+}
+
+.homework-ai-response details[open] summary {
+  border-bottom: 1px solid var(--border-soft);
+  font-weight: 600;
+}
+
+.homework-ai-response details > *:not(summary) {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.homework-ai-response details > ul,
+.homework-ai-response details > ol {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.ai-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin: 12px 0;
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+  background: var(--card);
+}
+
+.homework-ai-response table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.homework-ai-response th,
+.homework-ai-response td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-soft);
+  border-right: 1px solid var(--border-soft);
+}
+
+.homework-ai-response th:last-child,
+.homework-ai-response td:last-child {
+  border-right: none;
+}
+
+.homework-ai-response tr:last-child td {
+  border-bottom: none;
+}
+
+.homework-ai-response th {
+  background: var(--subtle-bg);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.homework-ai-response tr:nth-child(even) td {
+  background: var(--state-hover);
+}
+
+.homework-ai-response code {
+  background: var(--card);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.85em;
+  border: 1px solid var(--border-soft);
+}
+
+.homework-ai-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  font-size: 0.875rem;
+  color: var(--muted-text);
+  font-style: italic;
+}
+
+.homework-ai-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-soft);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media print {
+  .homework-ai-btn,
+  .homework-theme-ai-btn,
+  .subject-ai-actions,
+  .gemini-modal-backdrop {
+    display: none !important;
+  }
+}

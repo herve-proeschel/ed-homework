@@ -22,6 +22,7 @@ const MENU_ICONS = {
   system: <><rect x="3.5" y="4" width="17" height="12" rx="1.5" /><path d="M8 20h8M12 16v4" /></>,
   light: <><circle cx="12" cy="12" r="3.5" /><path d="M12 2.5v2M12 19.5v2M21.5 12h-2M4.5 12h-2M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4M18.7 18.7l-1.4-1.4M6.7 6.7L5.3 5.3" /></>,
   dark: <path d="M20.2 15.3A8.5 8.5 0 0 1 8.7 3.8 8.5 8.5 0 1 0 20.2 15.3z" />,
+  gemini: <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />,
 };
 
 function MenuIcon({ name }) {
@@ -41,7 +42,14 @@ function getSystemTheme() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-export default function ThemeMenu({ viewMode, onSelectView, title, eleveModal, onSelectEleve }) {
+export default function ThemeMenu({
+  viewMode,
+  onSelectView,
+  title,
+  eleveModal,
+  onSelectEleve,
+  onOpenGeminiSettings,
+}) {
   const [theme, setTheme] = useState(getStoredTheme);
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
@@ -206,6 +214,25 @@ export default function ThemeMenu({ viewMode, onSelectView, title, eleveModal, o
             </button>
           ))}
           <div className="theme-menu-divider" />
+          <p className="theme-menu-section-title">Intelligence Artificielle</p>
+          <button
+            type="button"
+            role="menuitem"
+            className="theme-option"
+            ref={(element) => {
+              menuItemRefs.current[eleveCount + VIEW_OPTIONS.length] = element;
+            }}
+            onClick={() => {
+              onOpenGeminiSettings?.();
+              closeMenu(true);
+            }}
+          >
+            <span className="theme-option-label">
+              <MenuIcon name="gemini" />
+              <span>Assistant IA (Gemini)</span>
+            </span>
+          </button>
+          <div className="theme-menu-divider" />
           <p className="theme-menu-section-title">Thème</p>
           {THEME_OPTIONS.map((option, index) => (
             <button
@@ -214,7 +241,7 @@ export default function ThemeMenu({ viewMode, onSelectView, title, eleveModal, o
               aria-checked={theme === option.value}
               className="theme-option"
               key={option.value}
-              ref={(element) => { menuItemRefs.current[eleveCount + VIEW_OPTIONS.length + index] = element; }}
+              ref={(element) => { menuItemRefs.current[eleveCount + VIEW_OPTIONS.length + 1 + index] = element; }}
               onClick={() => selectTheme(option.value)}
             >
               <span className="theme-option-label">

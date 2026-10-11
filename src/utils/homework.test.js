@@ -4,6 +4,7 @@ import {
   getHomeworkHistoryDateKeys,
   getHomeworkDisplayDays,
   getHomeworkSubjectOptions,
+  getSubjectHomeworkTimeline,
   isHomeworkDateInLast30Days,
 } from './homework';
 
@@ -59,5 +60,61 @@ describe('homework helpers', () => {
 
     expect(getHomeworkDisplayDays(futureDays, historyDays, 'mathématiques', false))
       .toEqual(futureDays);
+  });
+
+  it('extracts chronological timeline of homework and sessions for a subject', () => {
+    const upcomingDays = [
+      {
+        date: '2026-10-15',
+        matieres: [
+          {
+            matiere: 'Mathématiques',
+            aFaire: { contenu: 'RXhlcmNpY2UgMTQ=', interrogation: false },
+          },
+        ],
+      },
+    ];
+
+    const historyDays = [
+      {
+        date: '2026-10-08',
+        matieres: [
+          {
+            matiere: 'Mathématiques',
+            contenuDeSeance: { contenu: 'Q291cnMgc3VyIGxlcyBmcmFjdGlvbnM=' },
+            aFaire: { contenu: 'RXhlcmNpY2UgMTA=', interrogation: false },
+          },
+          {
+            matiere: 'Histoire-Géo',
+            aFaire: { contenu: 'TGVjb24gMQ==' },
+          },
+        ],
+      },
+      {
+        date: '2026-10-12',
+        matieres: [
+          {
+            matiere: 'mathématiques',
+            aFaire: { contenu: 'Q29udHLDtGxlIGZyYWN0aW9ucw==', interrogation: true },
+          },
+        ],
+      },
+    ];
+
+    const timeline = getSubjectHomeworkTimeline(upcomingDays, historyDays, 'Mathématiques');
+
+    expect(timeline).toHaveLength(3);
+    // Chronological order: 2026-10-08, 2026-10-12, 2026-10-15
+    expect(timeline[0].date).toBe('2026-10-08');
+    expect(timeline[0].aFaireHtml).toBe('Exercice 10');
+    expect(timeline[0].contenuDeSeanceHtml).toBe('Cours sur les fractions');
+    expect(timeline[0].interrogation).toBe(false);
+
+    expect(timeline[1].date).toBe('2026-10-12');
+    expect(timeline[1].aFaireHtml).toBe('Contrôle fractions');
+    expect(timeline[1].interrogation).toBe(true);
+
+    expect(timeline[2].date).toBe('2026-10-15');
+    expect(timeline[2].aFaireHtml).toBe('Exercice 14');
   });
 });

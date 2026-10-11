@@ -11,6 +11,7 @@ import {
 import {
   getHomeworkDisplayDays,
   getHomeworkSubjectOptions,
+  getSubjectHomeworkTimeline,
   hasHomeworkSubjectContent,
 } from '../utils/homework';
 
@@ -53,6 +54,7 @@ export default function HomeWorkView({
   selectedSubject: selectedSubjectProp,
   onSubjectChange,
   onOpenDocument,
+  onOpenAi,
   onLoadPreviousWeek,
   onLoadHomeworkHistory,
   homeworkHistoryBusy = false,
@@ -74,6 +76,10 @@ export default function HomeWorkView({
   const visibleDays = useMemo(
     () => getHomeworkDisplayDays(days, historyDays, activeSubject, filterOpen),
     [activeSubject, days, filterOpen, historyDays],
+  );
+  const activeSubjectTimeline = useMemo(
+    () => (activeSubject ? getSubjectHomeworkTimeline(days, historyDays, activeSubject) : []),
+    [activeSubject, days, historyDays],
   );
 
   useEffect(() => {
@@ -162,6 +168,26 @@ export default function HomeWorkView({
               <option key={subject.key} value={subject.key}>{subject.label}</option>
             ))}
           </select>
+          {activeSubject && onOpenAi && activeSubjectTimeline.length > 0 && (
+            <button
+              type="button"
+              className="homework-theme-ai-btn"
+              onClick={() => {
+                const subjectObj = subjectOptions.find((s) => s.key === activeSubject);
+                onOpenAi({
+                  matiere: subjectObj ? subjectObj.label : activeSubject,
+                  timeline: activeSubjectTimeline,
+                  defaultTab: 'theme',
+                });
+              }}
+              title="Synthétiser le cours et le thème à travers les séances récentes"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
+              </svg>
+              <span>Synthèse du thème ({activeSubjectTimeline.length} séance{activeSubjectTimeline.length > 1 ? 's' : ''})</span>
+            </button>
+          )}
           {homeworkHistoryBusy && <span className="homework-filter-status">Chargement des 30 derniers jours…</span>}
           {activeSubject && !homeworkHistoryBusy && (
             <span className="homework-filter-status">Historique des 30 derniers jours</span>
@@ -222,6 +248,29 @@ export default function HomeWorkView({
                         )}
                         <DocumentLinks documents={documents.session} onOpenDocument={onOpenDocument} />
                       </>
+                    )}
+                    {onOpenAi && (aFaireHtml || contenuDeSeanceHtml) && (
+                      <div className="subject-ai-actions">
+                        <button
+                          type="button"
+                          className="homework-ai-btn"
+                          onClick={() =>
+                            onOpenAi({
+                              matiere: m.matiere,
+                              date: day.date,
+                              aFaireHtml,
+                              contenuDeSeanceHtml,
+                              timeline: getSubjectHomeworkTimeline(days, historyDays, m.matiere),
+                            })
+                          }
+                          title="Demander une explication ou de l'aide à Gemini"
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
+                          </svg>
+                          <span>Aide IA</span>
+                        </button>
+                      </div>
                     )}
                   </div>
                 );

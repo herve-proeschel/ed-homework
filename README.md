@@ -43,6 +43,11 @@ Elle permet de se connecter à la plateforme **ÉcoleDirecte** (compte parent ou
   * L'emploi du temps est imprimé semaine par semaine, du lundi au vendredi.
   * Feuille de style optimisée `@media print` avec pagination automatique A4, masquant les éléments d'interface parasites.
   * Déclenchement via `window.print()` vers une imprimante physique ou la sortie PDF native du navigateur.
+* **Assistant IA & Tuteur pédagogique (Google Gemini BYOK) :**
+  * Connexion au compte personnel de l'utilisateur avec une clé API gratuite Google AI Studio.
+  * Clé conservée exclusivement dans le navigateur local (`localStorage.ed_gemini_api_key`), avec masquage de sécurité et vérification en direct.
+  * Bouton « Aide IA » sur chaque carte de devoir : reformuler la consigne simplement, suggérer une méthode pas à pas sans donner la solution brute, créer un quiz d'entraînement de 3 questions ou répondre à une question libre de l'élève.
+  * Les requêtes vont directement du navigateur vers l'API Gemini de Google : aucune donnée scolaire ne transite par un serveur tiers ni par le proxy Cloudflare.
 * **PWA hors ligne partielle :** Le shell et les assets générés sont précachés par un service worker en production. Les appels à l'API et les données privées restent toujours récupérés sur le réseau.
 
 ---
@@ -147,6 +152,7 @@ Les deux bindings limitent les connexions et les validations 2FA à 5 tentatives
 * `sessionStorage.ed_session` contient le token actif, le token 2FA, GTK, les cookies réduits, l'élève sélectionné, la liste des élèves et le nom affiché.
 * `localStorage.ed_user` contient uniquement l'identifiant utilisé pour préremplir le formulaire.
 * `localStorage.ed_fa` contient la réponse de validation 2FA mémorisée.
+* `localStorage.ed_gemini_api_key` contient la clé API personnelle Google Gemini pour l'assistant pédagogique.
 * Le mot de passe reste uniquement dans l'état React pendant la session de la page et n'est pas écrit dans le stockage du navigateur.
 
 Le Worker ne contient pas de base de données et ne persiste pas la session. La déconnexion et l'expiration de session suppriment les données de session locales. Les appels API et les réponses privées ne sont pas mis en cache par le service worker.

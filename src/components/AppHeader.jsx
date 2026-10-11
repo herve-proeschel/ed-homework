@@ -18,6 +18,7 @@ export default function AppHeader({
   eleveModal,
   onSelectEleve,
   onDisconnect,
+  onOpenGeminiSettings,
 }) {
   const eleveFirstName = getEleveFirstName(selectedEleve);
   const hasManagedEleves = (eleveModal?.eleves?.length || 0) > 0;
@@ -33,6 +34,7 @@ export default function AppHeader({
         title={title}
         eleveModal={eleveModal}
         onSelectEleve={onSelectEleve}
+        onOpenGeminiSettings={onOpenGeminiSettings}
       />
       <h1><button type="button" className="title-switch" onClick={onSwitchView}>{title}</button></h1>
       {isLoggedIn && <LoggedUser displayName={displayName} username={username} onDisconnect={onDisconnect} />}

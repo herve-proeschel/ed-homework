@@ -11,6 +11,8 @@ import { useAppContext } from './context/appContext';
 import ScheduleView from './components/ScheduleView';
 import GradesView from './components/GradesView';
 import MessagesView from './components/MessagesView';
+import GeminiSettingsModal from './components/GeminiSettingsModal';
+import HomeworkAiModal from './components/HomeworkAiModal';
 
 const VIEW_EMPTY_MESSAGES = {
   homework: 'Téléchargez les devoirs.',
@@ -24,6 +26,8 @@ function AppContent() {
   const [messagesSearchOpen, setMessagesSearchOpen] = useState(false);
   const [homeworkFilterOpen, setHomeworkFilterOpen] = useState(true);
   const [homeworkSubject, setHomeworkSubject] = useState('');
+  const [geminiSettingsOpen, setGeminiSettingsOpen] = useState(false);
+  const [homeworkAiModal, setHomeworkAiModal] = useState({ isOpen: false, homework: null });
   const {
     username,
     setUsername,
@@ -121,6 +125,7 @@ function AppContent() {
             eleveModal={eleveModal}
             onSelectEleve={selectEleve}
             onDisconnect={disconnect}
+            onOpenGeminiSettings={() => setGeminiSettingsOpen(true)}
           />
 
           <div className={`student-status-toolbar${eleveModal?.confirmed ? ' student-status-toolbar--closed' : ''}`}>
@@ -187,11 +192,24 @@ function AppContent() {
           selectedSubject={homeworkSubject}
           onSubjectChange={setHomeworkSubject}
           onOpenDocument={openDocument}
+          onOpenAi={(homework) => setHomeworkAiModal({ isOpen: true, homework })}
           onLoadPreviousWeek={retrievePreviousHomework}
           onLoadHomeworkHistory={retrieveHomeworkHistory}
           homeworkHistoryBusy={homeworkHistoryBusy}
         />
       )}
+
+      <GeminiSettingsModal
+        isOpen={geminiSettingsOpen}
+        onClose={() => setGeminiSettingsOpen(false)}
+      />
+
+      <HomeworkAiModal
+        isOpen={homeworkAiModal.isOpen}
+        homework={homeworkAiModal.homework}
+        onClose={() => setHomeworkAiModal({ isOpen: false, homework: null })}
+        onOpenSettings={() => setGeminiSettingsOpen(true)}
+      />
     </div>
   );
 }

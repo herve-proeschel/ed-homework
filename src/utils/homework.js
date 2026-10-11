@@ -1,4 +1,5 @@
 import { getHomeworkDocumentSections, getHomeworkSession } from './homeworkDocuments';
+import { decodeBase64Utf8 } from '../services/edClient';
 
 export const HOMEWORK_HISTORY_DAYS = 30;
 
@@ -74,4 +75,45 @@ export function filterHomeworkDaysBySubject(days, selectedSubject, referenceDate
 export function getHomeworkDisplayDays(days, historyDays, selectedSubject, filterOpen) {
   const sourceDays = filterOpen && selectedSubject ? historyDays ?? days : days;
   return filterHomeworkDaysBySubject(sourceDays, filterOpen ? selectedSubject : '');
+}
+
+export function getSubjectHomeworkTimeline(days, historyDays, targetSubject) {
+  if (!targetSubject) return [];
+  const normalizedTarget = normalizeHomeworkSubject(targetSubject);
+  const allDays = [...(days || []), ...(historyDays || [])];
+
+  const seenKeys = new Set();
+  const timeline = [];
+
+  const sortedDays = [...allDays].sort((a, b) => (a?.date || '').localeCompare(b?.date || ''));
+
+  for (const day of sortedDays) {
+    if (!day?.date) continue;
+    const matchingSubjects = (day.matieres || []).filter(
+      (m) => normalizeHomeworkSubject(m.matiere) === normalizedTarget && hasHomeworkSubjectContent(m),
+    );
+
+    for (const m of matchingSubjects) {
+      const aFaire = m.aFaire;
+      const session = getHomeworkSession(m);
+      const key = `${day.date}-${m.matiere}-${aFaire?.id || aFaire?.contenu || ''}-${session?.id || session?.contenu || ''}`;
+      if (seenKeys.has(key)) continue;
+      seenKeys.add(key);
+
+      const aFaireHtml = decodeBase64Utf8(aFaire?.contenu ?? '');
+      const contenuDeSeanceHtml = decodeBase64Utf8(session?.contenu ?? '');
+      if (!aFaireHtml && !contenuDeSeanceHtml) continue;
+
+      timeline.push({
+        date: day.date,
+        matiere: m.matiere,
+        aFaireHtml,
+        contenuDeSeanceHtml,
+        donneLe: aFaire?.donneLe || '',
+        interrogation: Boolean(aFaire?.interrogation),
+      });
+    }
+  }
+
+  return timeline;
 }
