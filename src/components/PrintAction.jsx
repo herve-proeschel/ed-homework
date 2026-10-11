@@ -1,6 +1,17 @@
 const LABELS = { homework: 'devoirs', schedule: 'emploi du temps', grades: 'notes', messages: 'messages' };
 
-export default function PrintAction({ onRetrieve, onPrint, canPrint, hasData = false, compact = false, mode = 'homework', busy = false, onSearch, searchActive = false }) {
+export default function PrintAction({
+  onRetrieve,
+  onPrint,
+  canPrint,
+  hasData = false,
+  compact = false,
+  mode = 'homework',
+  busy = false,
+  onSearch,
+  searchActive = false,
+  searchTitle = 'Rechercher',
+}) {
   const label = LABELS[mode] || LABELS.homework;
   return (
     <div className={`action-row${compact ? ' action-row--compact' : ''}`}>
@@ -24,8 +35,8 @@ export default function PrintAction({ onRetrieve, onPrint, canPrint, hasData = f
           className={"print-btn"}
           onClick={onSearch}
           aria-pressed={searchActive}
-          title="Rechercher"
-          aria-label="Rechercher"
+          title={searchTitle}
+          aria-label={searchTitle}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />

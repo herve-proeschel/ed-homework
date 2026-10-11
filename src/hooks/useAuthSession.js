@@ -9,7 +9,15 @@ import {
   saveFa,
 } from '../services/sessionStorage';
 
-export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents }) {
+export function useAuthSession({
+  logStatus,
+  eleveListRef,
+  selectedEleveIdRef,
+  setEleveModal,
+  setPrintDays,
+  setHomeworkHistory,
+  setScheduleEvents,
+}) {
   const clientRef = useRef(null);
   const persistClientStateRef = useRef(() => {});
   const createClient = useCallback(() => {
@@ -141,12 +149,13 @@ export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, se
       eleveListRef.current = [];
       setEleveModal(null);
       setPrintDays(null);
+      setHomeworkHistory(null);
       setScheduleEvents([]);
       setDisplayName('');
       clearSession();
       logStatus(msg, true);
     },
-    [createClient, logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents, setDisplayName],
+    [createClient, logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setHomeworkHistory, setPrintDays, setScheduleEvents, setDisplayName],
   );
 
   const disconnect = useCallback(() => {
@@ -156,12 +165,13 @@ export function useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, se
     eleveListRef.current = [];
     setEleveModal(null);
     setPrintDays(null);
+    setHomeworkHistory(null);
     setScheduleEvents([]);
     clearSession();
     setPassword('');
     setDisplayName('');
     logStatus('Vous êtes déconnecté.');
-  }, [createClient, logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents, setDisplayName]);
+  }, [createClient, logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setHomeworkHistory, setPrintDays, setScheduleEvents, setDisplayName]);
 
   return {
     clientRef,

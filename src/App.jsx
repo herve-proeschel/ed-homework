@@ -22,6 +22,8 @@ const VIEW_EMPTY_MESSAGES = {
 function AppContent() {
   const touchStartRef = useRef(null);
   const [messagesSearchOpen, setMessagesSearchOpen] = useState(false);
+  const [homeworkFilterOpen, setHomeworkFilterOpen] = useState(true);
+  const [homeworkSubject, setHomeworkSubject] = useState('');
   const {
     username,
     setUsername,
@@ -39,6 +41,8 @@ function AppContent() {
     selectEleve,
     confirmEleve,
     printDays,
+    homeworkHistory,
+    homeworkHistoryBusy,
     scheduleEvents,
     scheduleBusy,
     hasMoreSchedule,
@@ -56,6 +60,7 @@ function AppContent() {
     retrieveSchedule,
     retrieveGrades,
     retrievePreviousHomework,
+    retrieveHomeworkHistory,
     openDocument,
     run,
     printHomework,
@@ -97,6 +102,11 @@ function AppContent() {
     return () => window.removeEventListener('afterprint', afterPrint);
   }, [afterPrint]);
 
+  const toggleHomeworkFilter = () => {
+    setHomeworkFilterOpen((open) => !open);
+    setHomeworkSubject('');
+  };
+
   return (
     <div className="app-shell" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className="app-topbar">
@@ -135,8 +145,15 @@ function AppContent() {
             hasData={(viewMode === 'grades' && Boolean(grades)) || (viewMode === 'messages' && Boolean(messages))}
             mode={viewMode}
             busy={viewMode === 'schedule' ? scheduleBusy : viewMode === 'grades' ? gradesBusy : viewMode === 'messages' ? messagesBusy : busy && (!eleveModal || eleveModal.confirmed)}
-            onSearch={viewMode === 'messages' ? () => setMessagesSearchOpen((open) => !open) : undefined}
-            searchActive={viewMode === 'messages' && messagesSearchOpen}
+            onSearch={viewMode === 'messages'
+              ? () => setMessagesSearchOpen((open) => !open)
+              : viewMode === 'homework' && printDays
+                ? toggleHomeworkFilter
+                : undefined}
+            searchActive={viewMode === 'messages' ? messagesSearchOpen : viewMode === 'homework' && homeworkFilterOpen}
+            searchTitle={viewMode === 'homework'
+              ? homeworkFilterOpen ? 'Masquer le filtre' : 'Afficher le filtre'
+              : 'Rechercher'}
             compact
           />
         </div>
@@ -165,8 +182,14 @@ function AppContent() {
       {viewMode === 'homework' && (
         <HomeWorkView
           days={printDays}
+          historyDays={homeworkHistory}
+          filterOpen={homeworkFilterOpen}
+          selectedSubject={homeworkSubject}
+          onSubjectChange={setHomeworkSubject}
           onOpenDocument={openDocument}
           onLoadPreviousWeek={retrievePreviousHomework}
+          onLoadHomeworkHistory={retrieveHomeworkHistory}
+          homeworkHistoryBusy={homeworkHistoryBusy}
         />
       )}
     </div>

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { decodeBase64Utf8 } from '../services/edClient';
 import { formatDay } from '../utils/formatDay';
 import {
@@ -8,6 +8,11 @@ import {
   getHomeworkDocumentUrl,
   getHomeworkSession,
 } from '../utils/homeworkDocuments';
+import {
+  filterHomeworkDaysBySubject,
+  getHomeworkSubjectOptions,
+  hasHomeworkSubjectContent,
+} from '../utils/homework';
 
 function DocumentLinks({ documents, onOpenDocument }) {
   const links = documents
@@ -41,9 +46,35 @@ function DocumentLinks({ documents, onOpenDocument }) {
   );
 }
 
-export default function HomeWorkView({ days, onOpenDocument, onLoadPreviousWeek }) {
+export default function HomeWorkView({
+  days,
+  historyDays = null,
+  filterOpen = true,
+  selectedSubject: selectedSubjectProp,
+  onSubjectChange,
+  onOpenDocument,
+  onLoadPreviousWeek,
+  onLoadHomeworkHistory,
+  homeworkHistoryBusy = false,
+}) {
   const viewRef = useRef(null);
   const touchStartRef = useRef(null);
+  const filterRef = useRef(null);
+  const [internalSelectedSubject, setInternalSelectedSubject] = useState('');
+  const selectedSubject = selectedSubjectProp === undefined
+    ? internalSelectedSubject
+    : selectedSubjectProp;
+  const subjectOptions = useMemo(
+    () => getHomeworkSubjectOptions([...(days || []), ...(historyDays || [])]),
+    [days, historyDays],
+  );
+  const activeSubject = filterOpen && subjectOptions.some((subject) => subject.key === selectedSubject)
+    ? selectedSubject
+    : '';
+  const visibleDays = useMemo(
+    () => filterHomeworkDaysBySubject(historyDays ?? days, activeSubject),
+    [activeSubject, days, historyDays],
+  );
 
   useEffect(() => {
     const view = viewRef.current;
@@ -64,6 +95,22 @@ export default function HomeWorkView({ days, onOpenDocument, onLoadPreviousWeek 
     view.addEventListener('touchmove', preventPullToRefresh, { passive: false });
     return () => view.removeEventListener('touchmove', preventPullToRefresh);
   }, [days]);
+
+  useEffect(() => {
+    const topbar = document.querySelector('.app-topbar');
+    const filter = filterRef.current;
+    if (!topbar || !filter) return undefined;
+
+    const updateStickyTop = () => {
+      filter.style.setProperty('--homework-filter-sticky-top', `${topbar.getBoundingClientRect().height}px`);
+    };
+    updateStickyTop();
+
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(updateStickyTop);
+    observer.observe(topbar);
+    return () => observer.disconnect();
+  }, [filterOpen]);
 
   const handleTouchStart = (event) => {
     const touch = event.changedTouches[0];
@@ -96,15 +143,35 @@ export default function HomeWorkView({ days, onOpenDocument, onLoadPreviousWeek 
   if (!days) return null;
   return (
     <div ref={viewRef} id="printView" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-      {days.map((day) => {
-        const subjects = (day.matieres || []).filter((subject) => {
-          const session = getHomeworkSession(subject);
-          const documents = getHomeworkDocumentSections(subject);
-          return subject.aFaire
-            || session?.contenu
-            || documents.homework.length > 0
-            || documents.session.length > 0;
-        });
+      {filterOpen && (subjectOptions.length > 0 || onLoadHomeworkHistory) && (
+        <div className="homework-filter" ref={filterRef}>
+          <label htmlFor="homework-subject-filter">Filtrer par matière</label>
+          <select
+            id="homework-subject-filter"
+            value={activeSubject}
+            onFocus={() => onLoadHomeworkHistory?.()}
+            onChange={(event) => {
+              const subject = event.target.value;
+              if (onSubjectChange) onSubjectChange(subject);
+              else setInternalSelectedSubject(subject);
+              if (subject) onLoadHomeworkHistory?.();
+            }}
+          >
+            <option value="">Toutes les matières</option>
+            {subjectOptions.map((subject) => (
+              <option key={subject.key} value={subject.key}>{subject.label}</option>
+            ))}
+          </select>
+          {homeworkHistoryBusy && <span className="homework-filter-status">Chargement des 30 derniers jours…</span>}
+          {activeSubject && !homeworkHistoryBusy && (
+            <span className="homework-filter-status">Historique des 30 derniers jours</span>
+          )}
+        </div>
+      )}
+      {activeSubject && visibleDays.length === 0 ? (
+        <p className="homework-filter-empty">Aucun devoir pour cette matière sur les 30 derniers jours.</p>
+      ) : visibleDays.map((day) => {
+        const subjects = (day.matieres || []).filter(hasHomeworkSubjectContent);
         return (
           <div className="day-container" key={day.date}>
             <h2 className="day-title">{formatDay(day.date)}</h2>

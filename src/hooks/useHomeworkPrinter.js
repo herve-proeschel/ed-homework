@@ -7,9 +7,12 @@ import { useEleveSelection } from './useEleveSelection';
 import { useAuthSession } from './useAuthSession';
 import {
   getHomeworkDocumentFilename,
-  getHomeworkDocumentSections,
-  getHomeworkSession,
 } from '../utils/homeworkDocuments';
+import {
+  getDateKey as dateKey,
+  getHomeworkHistoryDateKeys,
+  hasHomeworkSubjectContent,
+} from '../utils/homework';
 
 const VIEW_STATUS_MESSAGES = {
   homework: 'Téléchargez les devoirs.',
@@ -33,18 +36,13 @@ function createDownloadedData() {
   return {
     homework: null,
     homeworkLoadedWeeks: [],
+    homeworkHistory: null,
+    homeworkHistoryLoaded: false,
     schedule: [],
     grades: null,
     scheduleWeekCount: 0,
     scheduleHasMore: true,
   };
-}
-
-function dateKey(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }
 
 function startOfWeek(date) {
@@ -66,14 +64,7 @@ function getWeekDateKeys(weekStart) {
 function hasHomeworkContent(day) {
   const subjects = day?.matieres;
   if (!Array.isArray(subjects)) return Boolean(day);
-  return subjects.some((subject) => {
-    const session = getHomeworkSession(subject);
-    const documents = getHomeworkDocumentSections(subject);
-    return subject.aFaire
-      || session?.contenu
-      || documents.homework.length > 0
-      || documents.session.length > 0;
-  });
+  return subjects.some(hasHomeworkSubjectContent);
 }
 
 function mergeHomeworkDays(existingDays, newDays) {
@@ -99,6 +90,7 @@ export function useHomeworkPrinter() {
   const downloadedDataByEleveRef = useRef(downloadedDataByEleve);
   const autoDownloadKeyRef = useRef('');
   const previousHomeworkBusyRef = useRef(false);
+  const homeworkHistoryBusyRef = useRef(false);
   const [viewMode, setViewMode] = useState(getSavedViewMode);
   const [scheduleEvents, setScheduleEvents] = useState([]);
   const [scheduleBusy, setScheduleBusy] = useState(false);
@@ -106,8 +98,10 @@ export function useHomeworkPrinter() {
   const [scheduleHasMore, setScheduleHasMore] = useState(true);
   const [grades, setGrades] = useState(null);
   const [gradesBusy, setGradesBusy] = useState(false);
+  const [homeworkHistory, setHomeworkHistory] = useState(null);
   const [messages, setMessages] = useState(null);
   const [messagesBusy, setMessagesBusy] = useState(false);
+  const [homeworkHistoryBusy, setHomeworkHistoryBusy] = useState(false);
   const messagesSearchRef = useRef(0);
   const messagesQueryRef = useRef('');
   const [messagesQuery, setMessagesQuery] = useState('');
@@ -141,8 +135,10 @@ export function useHomeworkPrinter() {
       autoDownloadKeyRef.current = '';
       const cachedData = getDownloadedData(selectedId);
       const cachedDays = cachedData?.homework ?? null;
+      const cachedHistory = cachedData?.homeworkHistory ?? null;
       const cachedSchedule = cachedData?.schedule ?? [];
       setPrintDays(cachedDays);
+      setHomeworkHistory(cachedHistory);
       setScheduleEvents(cachedSchedule);
       setScheduleWeekCount(cachedData?.scheduleWeekCount ?? (cachedSchedule.length ? 1 : 0));
       setScheduleHasMore(cachedData?.scheduleHasMore ?? true);
@@ -181,7 +177,15 @@ export function useHomeworkPrinter() {
     persistSession,
     handleSessionExpired,
     disconnect,
-  } = useAuthSession({ logStatus, eleveListRef, selectedEleveIdRef, setEleveModal, setPrintDays, setScheduleEvents: resetDownloadedData });
+  } = useAuthSession({
+    logStatus,
+    eleveListRef,
+    selectedEleveIdRef,
+    setEleveModal,
+    setPrintDays,
+    setHomeworkHistory,
+    setScheduleEvents: resetDownloadedData,
+  });
 
   const openDocument = useCallback(async (document) => {
     try {
@@ -390,6 +394,121 @@ export function useHomeworkPrinter() {
     updateDownloadedData,
   ]);
 
+  const retrieveHomeworkHistory = useCallback(async () => {
+    const eleveId = selectedEleveIdRef.current;
+    if (!eleveId || busy || previousHomeworkBusyRef.current || homeworkHistoryBusyRef.current) return;
+
+    const cachedData = getDownloadedData(eleveId);
+    if (cachedData?.homeworkHistoryLoaded) return;
+
+    const isCurrentEleve = () => String(selectedEleveIdRef.current) === String(eleveId);
+    homeworkHistoryBusyRef.current = true;
+    setHomeworkHistoryBusy(true);
+    setBusy(true);
+    logStatus('Téléchargement des devoirs des 30 derniers jours...');
+
+    try {
+      let listRes = await clientRef.current.getCahierDeTexte(eleveId);
+
+      if (isSessionExpiredError(listRes)) {
+        if (password) {
+          logStatus('Session expirée, ré-authentification en cours...');
+          const accountData = await performLogin();
+          const accountDisplayName = getAccountFullName(accountData);
+          setDisplayName(accountDisplayName);
+          setIsLoggedIn(true);
+          persistSession(accountDisplayName);
+          listRes = await clientRef.current.getCahierDeTexte(eleveId);
+        } else {
+          handleSessionExpired();
+          return;
+        }
+      }
+
+      if (listRes.code !== 200 || !listRes.data || typeof listRes.data !== 'object') {
+        throw new Error(listRes.message || 'Erreur lors de la lecture du cahier de texte.');
+      }
+
+      const historyDates = getHomeworkHistoryDateKeys(new Date());
+      const firstHistoryDate = historyDates[0];
+      const lastHistoryDate = historyDates[historyDates.length - 1];
+      const listedDates = Object.keys(listRes.data)
+        .filter((date) => date >= firstHistoryDate && date <= lastHistoryDate)
+        .sort();
+      const datesToLoad = listedDates.length ? listedDates : historyDates;
+      const detailedDays = [];
+
+      for (let i = 0; i < datesToLoad.length; i++) {
+        const date = datesToLoad[i];
+        logStatus(`Collecte de l’historique (${i + 1}/${datesToLoad.length}) : ${date}...`);
+        let detail = await clientRef.current.getCahierDeTexteDetail(eleveId, date);
+
+        if (isSessionExpiredError(detail)) {
+          if (password) {
+            logStatus('Renouvellement de la session...');
+            const accountData = await performLogin();
+            const accountDisplayName = getAccountFullName(accountData);
+            setDisplayName(accountDisplayName);
+            setIsLoggedIn(true);
+            persistSession(accountDisplayName);
+            detail = await clientRef.current.getCahierDeTexteDetail(eleveId, date);
+          } else {
+            handleSessionExpired('Votre session a expiré pendant la récupération. Veuillez vous reconnecter.');
+            return;
+          }
+        }
+
+        if (detail && detail.code !== 200) {
+          throw new Error(detail.message || `Erreur lors de la lecture du devoir du ${date}.`);
+        }
+        if (detail?.data && hasHomeworkContent(detail.data)) {
+          detailedDays.push(detail.data);
+        }
+      }
+
+      const nextEntry = updateDownloadedData(eleveId, (previous) => ({
+        ...previous,
+        homeworkHistory: detailedDays,
+        homeworkHistoryLoaded: true,
+      }));
+
+      if (isCurrentEleve()) {
+        setHomeworkHistory(nextEntry.homeworkHistory);
+      }
+      persistSession();
+      logStatus(
+        detailedDays.length
+          ? 'Historique des devoirs téléchargé.'
+          : 'Aucun devoir trouvé sur les 30 derniers jours.',
+      );
+    } catch (error) {
+      if (isSessionExpiredError({ message: error.message })) {
+        handleSessionExpired();
+      } else {
+        logStatus(`Erreur : ${error.message}`, true);
+      }
+    } finally {
+      homeworkHistoryBusyRef.current = false;
+      setHomeworkHistoryBusy(false);
+      setBusy(false);
+    }
+  }, [
+    busy,
+    clientRef,
+    getDownloadedData,
+    handleSessionExpired,
+    logStatus,
+    password,
+    performLogin,
+    persistSession,
+    selectedEleveIdRef,
+    setBusy,
+    setDisplayName,
+    setHomeworkHistory,
+    setIsLoggedIn,
+    updateDownloadedData,
+  ]);
+
   const retrieveGrades = useCallback(async () => {
     const eleveId = selectedEleveIdRef.current;
     if (!eleveId || gradesBusy) return;
@@ -566,7 +685,7 @@ export function useHomeworkPrinter() {
         throw new Error(listRes.message || 'Erreur lors de la lecture du cahier de texte.');
       }
 
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = dateKey(new Date());
       const futureDates = Object.keys(listRes.data).filter((d) => d > todayStr).sort();
 
       if (futureDates.length === 0) {
@@ -695,6 +814,7 @@ export function useHomeworkPrinter() {
     selectEleve,
     confirmEleve,
     printDays,
+    homeworkHistory,
     downloadedDataByEleve,
     scheduleEvents,
     scheduleBusy,
@@ -713,6 +833,8 @@ export function useHomeworkPrinter() {
     retrieveSchedule,
     retrieveGrades,
     retrievePreviousHomework,
+    retrieveHomeworkHistory,
+    homeworkHistoryBusy,
     openDocument,
     buildPrintHtml,
     run,
