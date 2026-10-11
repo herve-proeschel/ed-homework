@@ -280,7 +280,7 @@ function HomeworkAiModalDialog({
       onMouseDown={onClose}
     >
       <div
-        className="gemini-modal"
+        className={`gemini-modal homework-ai-modal ${messages.length > 0 ? 'has-messages' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="homework-ai-modal-title"
