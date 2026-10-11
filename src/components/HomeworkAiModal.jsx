@@ -11,6 +11,54 @@ import {
 } from '../services/geminiClient';
 import { formatAiText } from '../utils/formatAiText';
 
+function AutoAwesomeIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25z" />
+    </svg>
+  );
+}
+
+function PersonIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+    </svg>
+  );
+}
+
+function SendIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+    </svg>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+    </svg>
+  );
+}
+
 function HomeworkAiModalDialog({
   homework,
   onClose,
@@ -240,28 +288,31 @@ function HomeworkAiModalDialog({
       >
         <div className="gemini-modal-header">
           <h2 id="homework-ai-modal-title" className="gemini-modal-title">
-            <span>✨</span> Aide aux devoirs • {subject}
+            <span className="gemini-modal-title-icon" aria-hidden="true">
+              <AutoAwesomeIcon />
+            </span>
+            <span>Aide aux devoirs • {subject}</span>
           </h2>
           <button
             type="button"
             className="gemini-modal-close"
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label="Fermer la boîte de dialogue"
           >
-            ✕
+            <CloseIcon />
           </button>
         </div>
 
         <div className="gemini-modal-body">
           {!hasApiKey ? (
-            <div className="gemini-status-card" style={{ textAlign: 'center', padding: '24px 16px' }}>
-              <p style={{ margin: '0 0 12px', fontSize: '0.95rem' }}>
+            <div className="gemini-status-card" style={{ textAlign: 'center', padding: '28px 20px' }}>
+              <p style={{ margin: '0 0 16px', fontSize: '0.95rem', lineHeight: 1.5 }}>
                 Pour poser des questions à Gemini et obtenir une explication sur ce devoir, veuillez d’abord connecter votre compte Gemini.
               </p>
               <button
                 type="button"
                 className="main-btn"
-                style={{ width: 'auto', alignSelf: 'center' }}
+                style={{ width: 'auto', alignSelf: 'center', minWidth: '220px' }}
                 onClick={() => {
                   onClose();
                   onOpenSettings();
@@ -279,7 +330,7 @@ function HomeworkAiModalDialog({
                 </div>
               )}
 
-              <div className="homework-ai-tabs" role="tablist" aria-label="Types d'aide">
+              <div className="homework-ai-tabs" role="tablist" aria-label="Modes d'assistance">
                 {Object.values(HOMEWORK_PROMPT_TYPES).map((tab) => (
                   <button
                     key={tab.id}
@@ -302,28 +353,46 @@ function HomeworkAiModalDialog({
                     placeholder="Exemple : Peux-tu me rappeler la formule nécessaire ?"
                     value={customPrompt}
                     onChange={(e) => setCustomPrompt(e.target.value)}
-                    rows={2}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        if (customPrompt.trim() && !busy) {
+                          handleAsk('custom', customPrompt);
+                        }
+                      }
+                    }}
+                    rows={3}
                   />
-                  <button
-                    type="button"
-                    className="main-btn"
-                    style={{ alignSelf: 'flex-end', height: '36px', padding: '0 16px', fontSize: '0.85rem' }}
-                    onClick={() => handleAsk('custom', customPrompt)}
-                    disabled={busy || !customPrompt.trim()}
-                  >
-                    Envoyer
-                  </button>
+                  <div className="homework-ai-reply-footer">
+                    <span className="homework-ai-reply-hint">
+                      Appuie sur Entrée pour envoyer • Maj + Entrée pour un saut de ligne
+                    </span>
+                    <button
+                      type="button"
+                      className="main-btn homework-ai-send-btn"
+                      onClick={() => handleAsk('custom', customPrompt)}
+                      disabled={busy || !customPrompt.trim()}
+                    >
+                      <SendIcon />
+                      <span>Envoyer</span>
+                    </button>
+                  </div>
                 </div>
               )}
 
-              {/* Discussion interactive / Fil de conversation */}
+              {/* Discussion interactive / Fil de conversation Material Design */}
               {messages.length > 0 && (
                 <div className="homework-ai-conversation" role="region" aria-label="Discussion avec le tuteur">
                   {messages.map((msg) => {
                     if (msg.role === 'user') {
                       return (
                         <div key={msg.id} className="homework-ai-msg is-user">
-                          <span className="homework-ai-msg-author is-user">👤 Toi</span>
+                          <div className="homework-ai-msg-header is-user">
+                            <span className="homework-ai-avatar is-user" aria-hidden="true">
+                              <PersonIcon />
+                            </span>
+                            <span className="homework-ai-msg-author is-user">Toi</span>
+                          </div>
                           <div className="homework-ai-msg-bubble-user">{msg.text}</div>
                         </div>
                       );
@@ -331,7 +400,12 @@ function HomeworkAiModalDialog({
 
                     return (
                       <div key={msg.id} className="homework-ai-msg is-assistant">
-                        <span className="homework-ai-msg-author">✨ Tuteur pédagogique</span>
+                        <div className="homework-ai-msg-header">
+                          <span className="homework-ai-avatar is-assistant" aria-hidden="true">
+                            <AutoAwesomeIcon />
+                          </span>
+                          <span className="homework-ai-msg-author">Tuteur pédagogique</span>
+                        </div>
                         {msg.text ? (
                           <div
                             className="homework-ai-response"
@@ -348,10 +422,21 @@ function HomeworkAiModalDialog({
                           <div className="homework-ai-msg-actions">
                             <button
                               type="button"
-                              className="secondary-btn homework-ai-copy-btn"
+                              className="homework-ai-copy-btn"
                               onClick={() => handleCopy(msg.id, msg.text)}
+                              aria-label="Copier la réponse dans le presse-papiers"
                             >
-                              {copiedId === msg.id ? '✓ Copié !' : '📋 Copier'}
+                              {copiedId === msg.id ? (
+                                <>
+                                  <CheckIcon />
+                                  <span>Copié !</span>
+                                </>
+                              ) : (
+                                <>
+                                  <CopyIcon />
+                                  <span>Copier</span>
+                                </>
+                              )}
                             </button>
                           </div>
                         )}
@@ -498,11 +583,11 @@ function HomeworkAiModalDialog({
                     ))}
                   </div>
 
-                  <div className="homework-ai-reply-input-row">
+                  <div className="homework-ai-reply-box">
                     <textarea
                       ref={replyInputRef}
                       className="homework-ai-reply-textarea"
-                      placeholder="Réponds au tuteur ou pose une question supplémentaire... (Entrée pour envoyer)"
+                      placeholder="Écris ta réponse au tuteur ou pose une question supplémentaire..."
                       value={replyInput}
                       onChange={(e) => setReplyInput(e.target.value)}
                       onKeyDown={(e) => {
@@ -511,17 +596,23 @@ function HomeworkAiModalDialog({
                           handleSendReply();
                         }
                       }}
-                      rows={1}
+                      rows={2}
                       disabled={busy}
                     />
-                    <button
-                      type="button"
-                      className="main-btn homework-ai-send-btn"
-                      onClick={() => handleSendReply()}
-                      disabled={busy || !replyInput.trim()}
-                    >
-                      {busy ? '...' : 'Envoyer ➔'}
-                    </button>
+                    <div className="homework-ai-reply-footer">
+                      <span className="homework-ai-reply-hint">
+                        Appuie sur Entrée pour envoyer • Maj + Entrée pour un saut de ligne
+                      </span>
+                      <button
+                        type="button"
+                        className="main-btn homework-ai-send-btn"
+                        onClick={() => handleSendReply()}
+                        disabled={busy || !replyInput.trim()}
+                      >
+                        <SendIcon />
+                        <span>{busy ? 'Envoi...' : 'Envoyer'}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
