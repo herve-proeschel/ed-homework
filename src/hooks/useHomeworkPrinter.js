@@ -407,6 +407,23 @@ export function useHomeworkPrinter() {
     setBusy(true);
     logStatus('Téléchargement des devoirs des 30 derniers jours...');
 
+    const cachedHistory = Array.isArray(cachedData?.homeworkHistory)
+      ? cachedData.homeworkHistory
+      : [];
+    let detailedDays = [...cachedHistory];
+    const publishHistory = (history, loaded = false) => {
+      const nextEntry = updateDownloadedData(eleveId, (previous) => ({
+        ...previous,
+        homeworkHistory: history,
+        homeworkHistoryLoaded: loaded,
+      }));
+      if (isCurrentEleve()) {
+        setHomeworkHistory(nextEntry.homeworkHistory);
+      }
+      return nextEntry;
+    };
+    publishHistory(detailedDays);
+
     try {
       let listRes = await clientRef.current.getCahierDeTexte(eleveId);
 
@@ -436,7 +453,6 @@ export function useHomeworkPrinter() {
         .filter((date) => date >= firstHistoryDate && date <= lastHistoryDate)
         .sort();
       const datesToLoad = listedDates.length ? listedDates : historyDates;
-      const detailedDays = [];
 
       for (let i = 0; i < datesToLoad.length; i++) {
         const date = datesToLoad[i];
@@ -462,19 +478,12 @@ export function useHomeworkPrinter() {
           throw new Error(detail.message || `Erreur lors de la lecture du devoir du ${date}.`);
         }
         if (detail?.data && hasHomeworkContent(detail.data)) {
-          detailedDays.push(detail.data);
+          detailedDays = mergeHomeworkDays(detailedDays, [detail.data]);
+          publishHistory(detailedDays);
         }
       }
 
-      const nextEntry = updateDownloadedData(eleveId, (previous) => ({
-        ...previous,
-        homeworkHistory: detailedDays,
-        homeworkHistoryLoaded: true,
-      }));
-
-      if (isCurrentEleve()) {
-        setHomeworkHistory(nextEntry.homeworkHistory);
-      }
+      publishHistory(detailedDays, true);
       persistSession();
       logStatus(
         detailedDays.length

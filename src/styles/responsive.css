@@ -19,16 +19,23 @@
     font-size: 0.9rem;
   }
 
-  .main-btn,
-  .print-btn {
+  .main-btn {
     padding: 11px;
     font-size: 0.95rem;
   }
 
+  .action-icon-btn,
   .print-btn {
     width: 44px;
+    height: 44px;
     flex-basis: 44px;
-    font-size: 1.1rem;
+    padding: 0;
+  }
+
+  .action-icon-btn svg,
+  .print-btn svg {
+    width: 24px;
+    height: 24px;
   }
 
   .student-status-toolbar--closed {

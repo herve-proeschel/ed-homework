@@ -9,7 +9,7 @@ import {
   getHomeworkSession,
 } from '../utils/homeworkDocuments';
 import {
-  filterHomeworkDaysBySubject,
+  getHomeworkDisplayDays,
   getHomeworkSubjectOptions,
   hasHomeworkSubjectContent,
 } from '../utils/homework';
@@ -72,8 +72,8 @@ export default function HomeWorkView({
     ? selectedSubject
     : '';
   const visibleDays = useMemo(
-    () => filterHomeworkDaysBySubject(historyDays ?? days, activeSubject),
-    [activeSubject, days, historyDays],
+    () => getHomeworkDisplayDays(days, historyDays, activeSubject, filterOpen),
+    [activeSubject, days, filterOpen, historyDays],
   );
 
   useEffect(() => {

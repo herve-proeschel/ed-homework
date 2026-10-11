@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   filterHomeworkDaysBySubject,
   getHomeworkHistoryDateKeys,
+  getHomeworkDisplayDays,
   getHomeworkSubjectOptions,
   isHomeworkDateInLast30Days,
 } from './homework';
@@ -47,5 +48,16 @@ describe('homework helpers', () => {
 
     expect(filtered.map(({ date }) => date)).toEqual(['2026-10-10']);
     expect(filtered[0].matieres[0].matiere).toBe('Mathématiques');
+  });
+
+  it('restores all future days when the subject filter is hidden', () => {
+    const futureDays = [
+      day('2026-10-10', 'Mathématiques'),
+      day('2026-10-11', 'Français'),
+    ];
+    const historyDays = [day('2026-09-12', 'Mathématiques')];
+
+    expect(getHomeworkDisplayDays(futureDays, historyDays, 'mathématiques', false))
+      .toEqual(futureDays);
   });
 });

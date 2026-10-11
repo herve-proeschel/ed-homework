@@ -70,3 +70,8 @@ export function filterHomeworkDaysBySubject(days, selectedSubject, referenceDate
     }))
     .filter((day) => day.loading || day.matieres.length > 0);
 }
+
+export function getHomeworkDisplayDays(days, historyDays, selectedSubject, filterOpen) {
+  const sourceDays = filterOpen && selectedSubject ? historyDays ?? days : days;
+  return filterHomeworkDaysBySubject(sourceDays, filterOpen ? selectedSubject : '');
+}
